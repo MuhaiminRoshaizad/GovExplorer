@@ -98,7 +98,7 @@ All data comes from the Malaysian Government Open Data portal:
 - **API docs** → [developer.data.gov.my](https://developer.data.gov.my/)
 - **Base URL** → `https://api.data.gov.my`
 
-Endpoints used (so far):
+Endpoints we'll explore:
 
 | Endpoint | Purpose |
 |---|---|
@@ -111,12 +111,12 @@ Endpoints used (so far):
 
 ## 📝 License
 
-MIT — see [LICENSE](./LICENSE).
+MIT License — Copyright (c) 2026 Muhammad Muhaimin Bin Roshaizad. See [LICENSE](./LICENSE) for the full text.
 
 ---
 
 ## 👤 Author
 
-**Muhaimin Roshaizad** — [@MuhaiminRoshaizad](https://github.com/MuhaiminRoshaizad) (`minned`)
+**Muhammad Muhaimin Bin Roshaizad** — [@MuhaiminRoshaizad](https://github.com/MuhaiminRoshaizad) (`minned`)
 
 Built as a personal learning project. Feedback and suggestions welcome.
