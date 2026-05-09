@@ -88,13 +88,33 @@ Edit `App.tsx` and save — the app reloads instantly via Fast Refresh.
 
 ```
 GovExplorer/
-├── assets/             # Images, icons, fonts
-├── App.tsx             # Root component (entry UI)
-├── index.ts            # Registers App with React Native
-├── app.json            # Expo config (name, icon, splash, permissions)
-├── package.json        # Dependencies & npm scripts
-├── tsconfig.json       # TypeScript compiler config
-└── .gitignore
+├── app/                          # expo-router routes
+│   ├── _layout.tsx               # root: providers (Query, Theme, I18n, SafeArea)
+│   ├── (tabs)/
+│   │   ├── _layout.tsx           # tab bar (Home only in v1)
+│   │   └── index.tsx             # Home screen
+│   └── dataset/[id].tsx          # dataset detail (currently fuel only)
+├── src/
+│   ├── api/
+│   │   ├── client.ts             # apiGet with named base URLs
+│   │   └── datasets/
+│   │       └── fuelPrice.ts      # useFuelPriceQuery hook
+│   ├── components/
+│   │   ├── ui/                   # Card, Chip, SectionHead, StatCard, Skeleton, DataView
+│   │   └── feature/              # FuelLevelRow, FuelHistoryRow
+│   ├── theme/                    # tokens (light + dark), ThemeProvider, fonts
+│   ├── i18n/                     # BM/EN dictionaries + provider
+│   ├── hooks/                    # useSetting (AsyncStorage)
+│   └── types/
+│       └── fuelPrice.ts
+├── assets/                       # icons, splash
+├── docs/
+│   ├── design.md                 # v1 spec
+│   └── plans/
+│       └── 01-foundation.md      # this plan
+├── app.json                      # Expo config
+├── package.json
+└── tsconfig.json
 ```
 
 ---
