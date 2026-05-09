@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
-import { NativeModules, Platform } from 'react-native';
+import { useLocales } from 'expo-localization';
 import { useSetting } from '@/hooks/useSetting';
 import { en, type Dictionary } from './en';
 import { ms } from './ms';
@@ -8,15 +8,6 @@ export type Language = 'en' | 'ms';
 export type LanguageOverride = Language | 'auto';
 
 const DICTS: Record<Language, Dictionary> = { en, ms };
-
-function detectDeviceLanguage(): Language {
-  const locale =
-    (Platform.OS === 'ios'
-      ? NativeModules.SettingsManager?.settings?.AppleLocale ??
-        NativeModules.SettingsManager?.settings?.AppleLanguages?.[0]
-      : NativeModules.I18nManager?.localeIdentifier) ?? 'en-MY';
-  return /^ms\b/i.test(locale) ? 'ms' : 'en';
-}
 
 type Leaves<T> = T extends string
   ? ''
@@ -57,8 +48,10 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [override, setOverride] = useSetting<LanguageOverride>('language', 'auto');
-  const language: Language =
-    override === 'auto' ? detectDeviceLanguage() : override;
+  const locales = useLocales();
+  const deviceLanguage: Language = (locales[0]?.languageCode ?? 'en') === 'ms' ? 'ms' : 'en';
+
+  const language: Language = override === 'auto' ? deviceLanguage : override;
 
   const t = useCallback<I18nContextValue['t']>(
     (key, vars) => interpolate(lookup(DICTS[language], key), vars),
