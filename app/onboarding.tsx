@@ -12,7 +12,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 export default function OnboardingScreen() {
   const T = useTheme();
-  const { t, language, setOverride: setLang } = useI18n();
+  const { t, language, override: langOverride, setOverride: setLang } = useI18n();
   const { override: themeOverride, setOverride: setTheme } = useThemeControls();
   const { setCompleted } = useOnboarded();
   const { state, setStateCode, detect, detecting } = useLocation();
@@ -35,12 +35,22 @@ export default function OnboardingScreen() {
   }
 
   async function handleDone() {
-    await setCompleted(true);
-    router.replace('/');
+    try {
+      await setCompleted(true);
+      router.replace('/');
+    } catch (err) {
+      console.warn('[onboarding] failed to persist completion', err);
+    }
   }
 
   const isLast = step === 2;
-  const next = () => (isLast ? handleDone() : setStep((s) => s + 1));
+  const next = () => {
+    if (isLast) {
+      void handleDone();
+    } else {
+      setStep((s) => s + 1);
+    }
+  };
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
@@ -88,7 +98,7 @@ export default function OnboardingScreen() {
               <Text style={{ color: T.colors.text, fontWeight: T.fontWeight.semibold }}>
                 {t('onboarding.appearance.languageLabel')}
               </Text>
-              <SegmentedControl options={langOptions} value={language === 'en' || language === 'ms' ? language : 'auto'} onChange={setLang} />
+              <SegmentedControl options={langOptions} value={langOverride} onChange={setLang} />
             </View>
           </View>
         )}
