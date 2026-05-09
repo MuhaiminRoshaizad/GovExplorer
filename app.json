@@ -29,6 +29,10 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+    ],
+    "scheme": "govexplorer",
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }
