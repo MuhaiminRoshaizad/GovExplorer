@@ -17,12 +17,14 @@ export function Chip({ label, active, onPress }: ChipProps) {
         {
           borderColor: active ? T.colors.primary : T.colors.border,
           backgroundColor: active ? T.colors.primary : T.colors.surface,
+          borderRadius: T.radius.pill,
+          borderWidth: StyleSheet.hairlineWidth,
         },
       ]}
     >
       <Text
         style={{
-          color: active ? '#FFFFFF' : T.colors.text,
+          color: active ? T.colors.onPrimary : T.colors.text,
           fontSize: T.fontSize.body - 1,
           fontWeight: T.fontWeight.medium,
         }}
@@ -37,7 +39,5 @@ const styles = StyleSheet.create({
   base: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
   },
 });

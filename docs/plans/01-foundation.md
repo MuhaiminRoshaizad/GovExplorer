@@ -259,6 +259,7 @@ export interface ThemeColors {
   border: string;
   primary: string;
   primarySoft: string;
+  onPrimary: string;
   accent: string;
   accentSoft: string;
   success: string;
@@ -288,6 +289,7 @@ export const lightTheme: Theme = {
     border: '#E8E5DD',
     primary: '#1E3A5F',
     primarySoft: '#E6ECF4',
+    onPrimary: '#FFFFFF',
     accent: '#B45309',
     accentSoft: '#FBEFD9',
     success: '#15803D',
@@ -309,6 +311,7 @@ export const darkTheme: Theme = {
     border: '#232730',
     primary: '#7BA7D9',
     primarySoft: '#1A2434',
+    onPrimary: '#0E1014',
     accent: '#F59E0B',
     accentSoft: '#2A1F0E',
     success: '#22C55E',
@@ -809,12 +812,14 @@ export function Chip({ label, active, onPress }: ChipProps) {
         {
           borderColor: active ? T.colors.primary : T.colors.border,
           backgroundColor: active ? T.colors.primary : T.colors.surface,
+          borderRadius: T.radius.pill,
+          borderWidth: StyleSheet.hairlineWidth,
         },
       ]}
     >
       <Text
         style={{
-          color: active ? '#FFFFFF' : T.colors.text,
+          color: active ? T.colors.onPrimary : T.colors.text,
           fontSize: T.fontSize.body - 1,
           fontWeight: T.fontWeight.medium,
         }}
@@ -829,8 +834,6 @@ const styles = StyleSheet.create({
   base: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
   },
 });
 ```

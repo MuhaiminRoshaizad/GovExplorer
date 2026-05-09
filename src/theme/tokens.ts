@@ -12,6 +12,7 @@ export interface ThemeColors {
   border: string;
   primary: string;
   primarySoft: string;
+  onPrimary: string;
   accent: string;
   accentSoft: string;
   success: string;
@@ -41,6 +42,7 @@ export const lightTheme: Theme = {
     border: '#E8E5DD',
     primary: '#1E3A5F',
     primarySoft: '#E6ECF4',
+    onPrimary: '#FFFFFF',
     accent: '#B45309',
     accentSoft: '#FBEFD9',
     success: '#15803D',
@@ -62,6 +64,7 @@ export const darkTheme: Theme = {
     border: '#232730',
     primary: '#7BA7D9',
     primarySoft: '#1A2434',
+    onPrimary: '#0E1014',
     accent: '#F59E0B',
     accentSoft: '#2A1F0E',
     success: '#22C55E',
