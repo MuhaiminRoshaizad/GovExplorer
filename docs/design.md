@@ -6,9 +6,9 @@
 
 ## Summary
 
-GovExplorer v1 is a no-login mobile app that surfaces Malaysian government open data from `data.gov.my` (and a small set of complementary public APIs: BNM, METMalaysia, DOE) in a daily-glance dashboard plus a curated catalogue. The app is a side project for learning React Native; the build prioritises idiomatic, well-supported choices over novelty.
+GovExplorer v1 is a no-login mobile app that surfaces Malaysian government open data from `api.data.gov.my` in a daily-glance dashboard, a curated set of bespoke detail screens, and a live transit map. The app is a side project for learning React Native; the build prioritises idiomatic, well-supported choices over novelty. Single source — no third-party data dependencies.
 
-This spec covers v1 only. Transit (GTFS-realtime) and Ask AI screens are explicitly deferred to v2.
+This spec covers v1 only. LLM / "Ask AI" features are explicitly deferred to v2.
 
 ## Goals
 
@@ -20,9 +20,10 @@ This spec covers v1 only. Transit (GTFS-realtime) and Ask AI screens are explici
 ## Non-goals (v1)
 
 - LLM / Ask AI features.
-- Real-time transit / GTFS / map rendering.
+- GTFS-Realtime trip updates and service alerts (data.gov.my hasn't published these yet — v1 ships vehicle positions only).
 - Cross-device sync, accounts, server-side state.
-- Comprehensive coverage of the data.gov.my catalogue. We curate ~10 datasets for v1.
+- Generic catalogue browser. The app shows curated, polished detail screens for ~15 hand-picked datasets — not all 397.
+- Third-party data dependencies (`aqicn.org`, `api.waktusolat.app`, BNM's separate API). v1 is single-source on `api.data.gov.my`.
 - Automated tests (test scaffolding is staged but no tests are required).
 
 ## Scope
@@ -53,33 +54,58 @@ Three swipeable cards, persisted via AsyncStorage flag:
 
 ### Datasets wired up for v1
 
-Grouped by native cadence — every card in the UI displays its frequency tag.
+Reshaped 2026-05-09 after a deep audit of the 397 datasets at `api.data.gov.my` (audit results: `docs/data-audit.md`). The list now reflects what's actually available, mobile-friendly, and interesting — not what we guessed from memory. Single source: `api.data.gov.my`. No third-party data dependencies in v1.
 
-**Daily (Home indicator strip):**
-- Weather forecast (METMalaysia, scoped to user's state) — `api.met.gov.my`
-- Air quality index (DOE) — hourly station readings, nearest station to user's state. Primary source data.gov.my catalogue (`aqi`); if unavailable, fall back to DOE's APIMS feed
-- USD/MYR (and MYR/SGD as secondary) — Bank Negara, `api.bnm.gov.my/public/exchange-rate`
-- Dam water levels (JPS via data.gov.my) — for user's state if available
+**Selection criteria:** small payload, time-series or compelling categorical shape, "alive" cadence, broad public interest.
+
+**Daily indicator strip on Home (real-time-ish):**
+- **Weather forecast** — `api.data.gov.my/weather/forecast`, scoped to user's state.
+- **Active weather warnings** — `api.data.gov.my/weather/warning` (only render when non-empty; quiet by default).
+- **USD/MYR exchange rate** — `data-catalogue?id=exchangerates_daily_1200` (BNM 12:00 fix, sourced through data.gov.my so single base URL).
+- **Public transport ridership (yesterday)** — `data-catalogue?id=ridership_headline&limit=1&sort=-date`. Pairs naturally with the live transit screen.
 
 **Weekly:**
-- Fuel prices (KPDN) — RON95, RON97, Diesel, Budi95 subsidy
+- **Fuel prices** (`fuelprice`) — RON95, RON97, Diesel, Budi95 subsidy. *Already wired in Plan 01.*
+
+**Daily, but presented as monthly trend on detail screens:**
+- **PriceCatcher** (`pricecatcher`) — KPDN's daily transactional retail prices for the basket of essentials (rice, eggs, chicken, cooking oil, etc.) across markets. The single highest-data-journalism-value dataset on the entire portal.
+- **Daily car registrations** (`registration_transactions_car`) — by make and model. Powers the "most popular car bought in Malaysia" angle the user specifically asked for.
+- **Daily motorcycle registrations** (`registration_transactions_motorcycle`).
+- **Daily blood donations** (`blood_donations`) — by 8 ABO/Rh combinations. "Is your blood type in demand right now?"
+- **Daily payment instruments** (`payment_instruments`) — cards vs e-wallets vs cheques. Cashless trend.
 
 **Monthly:**
-- Consumer Price Index (DOSM headline + by state)
-- Unemployment rate (DOSM)
-- Births (JPN)
-- Vehicle registrations (JPJ)
+- **Consumer Price Index — headline** (`cpi_headline`) — inflation by 2-digit COICOP division.
+- **Labour force — monthly** (`lfs_month`) — unemployment rate, participation rate.
+- **Tourist arrivals** (`arrivals`) — by nationality and sex.
+- **Air pollution monthly aggregate** (`air_pollution`) — DOSM's monthly rollup. (Real-time AQI deferred until DOE publishes a first-party API.)
 
-**Annual:**
-- Population by state (DOSM)
+**Annual / static:**
+- **Population by district** (`population_district`) — paired with `crime_district` for a per-capita crime view.
+- **Crimes by district** (`crime_district`).
+- **Household income by district** (`hh_income_district`).
+- **Birthday popularity** (`birthday_popularity` — *id pending live verification*) — share-my-birthday novelty tool.
 
-All datasets are fetched from the existing `apiGet` client; new files added per dataset under `src/api/datasets/` exporting one `useXxxQuery` hook each.
+**Live transit (NEW for v1, was deferred to v2):**
+- **GTFS-Static** — `api.data.gov.my/gtfs-static/{ktmb,prasarana}` returns ZIPs containing `routes.txt`, `stops.txt`, `trips.txt`. Decoded once, cached on device, used for route/station joins.
+- **GTFS-Realtime vehicle positions** — `api.data.gov.my/gtfs-realtime/vehicle-position/{ktmb|prasarana?category=...}`. Protobuf, 30-second update cadence. Vehicle position only — trip updates and service alerts are still in the data.gov.my pipeline, not yet exposed.
+- Coverage in v1: KTMB Komuter + intercity, Rapid KL (LRT/MRT/monorail/bus), MRT feeder buses. Penang/Kuantan and BAS.MY (state stage buses) deferred to a later release; Penang is also flagged for known trip-ID mismatches in the docs.
+
+**Explicitly dropped from the original design (no first-party API exists, and v1 has a hard rule against third-party deps):**
+- ~~Air quality (DOE / `aqicn.org`)~~ — no first-party endpoint.
+- ~~Dam water levels (JPS)~~ — only HTML portal, no API.
+- ~~Prayer times (JAKIM)~~ — only community scraper `api.waktusolat.app`.
+- ~~BNM separate API~~ — `data-catalogue?id=exchangerates_daily_1200` covers FX from the same single base URL. (Kijang Emas, OPR, base rates would have been BNM-only; not worth a second base for v1.)
+
+The README's "Coming when the publishing agency adds an API" footer lists these so users understand the gaps are upstream, not a TODO on this app.
+
+All datasets fetched from the existing `apiGet` client. One file per dataset under `src/api/datasets/` exporting `useXxxQuery`. The `bnm` and `metMalaysia` named bases added in Plan 01 are now unused — deferred for cleanup in a Plan 03 polish pass; no harm in leaving them.
 
 ### Location strategy
 
 - User's state is captured during onboarding and stored in AsyncStorage (`location.state`).
 - Settings screen exposes a "Lokasi" row to change it any time.
-- Location-aware datasets (weather, AQI, dam levels, state-scoped CPI/unemployment) read from `useLocation()`.
+- Location-aware datasets (weather, state-scoped CPI/unemployment, district-scoped population/crime/income) read from `useLocation()`.
 - Datasets without state granularity (national fuel prices, exchange rates) ignore location.
 - State-scoped datasets that have nationwide views (CPI, unemployment) provide a "View nationwide" toggle on their detail screen.
 
