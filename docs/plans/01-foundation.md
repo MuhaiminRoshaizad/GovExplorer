@@ -492,10 +492,12 @@ export const en = {
     diesel: 'Diesel',
     budi95: 'Budi95 subsidy: RM {value} / litre',
   },
-} as const;
+};
 
 export type Dictionary = typeof en;
 ```
+
+> Note: `as const` is intentionally NOT applied. `Path<T>` (used in the provider) only walks `keyof T`, which preserves literal keys regardless. Adding `as const` would literalize the value strings too, which would force `ms: Dictionary` to use the exact English literals — defeating the entire point of having translations.
 
 - [ ] **Step 2: Create `src/i18n/ms.ts`**
 
