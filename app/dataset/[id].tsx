@@ -39,7 +39,7 @@ function FuelDetail() {
         query={query}
         renderLoading={() => <FuelDetailSkeleton />}
       >
-        {(weeks) => <FuelDetailBody weeks={weeks} onRefresh={query.refetch} refreshing={query.isFetching} />}
+        {(weeks) => <FuelDetailBody weeks={weeks} onRefresh={query.refetch} refreshing={query.isRefetching} />}
       </DataView>
     </SafeAreaView>
   );
@@ -71,6 +71,15 @@ function FuelDetailBody({ weeks, onRefresh, refreshing }: FuelDetailBodyProps) {
       data={history}
       keyExtractor={(w) => w.date}
       renderItem={({ item }) => <FuelHistoryRow week={item} />}
+      ListEmptyComponent={
+        history.length === 0 ? (
+          <View style={{ paddingHorizontal: T.spacing.xl, paddingTop: T.spacing.xl }}>
+            <Text style={{ color: T.colors.textMuted, textAlign: 'center' }}>
+              {t('common.empty')}
+            </Text>
+          </View>
+        ) : null
+      }
       ListHeaderComponent={
         <View style={{ paddingHorizontal: T.spacing.xl, paddingTop: T.spacing.lg, gap: T.spacing.lg }}>
           <Text style={{ color: T.colors.textMuted, fontSize: T.fontSize.label }}>
@@ -137,7 +146,7 @@ function Header({ title }: { title: string }) {
       ]}
     >
       <Pressable
-        onPress={() => router.back()}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.5 : 1 }]}
         hitSlop={8}
       >
