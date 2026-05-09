@@ -193,8 +193,8 @@ No drop-shadow stacks. Borders + a single subtle shadow on the hero card only.
 |---|---|---|
 | Routing | `expo-router` v3 | Default for new Expo, file-based, what the docs lead with |
 | Server state | `@tanstack/react-query` | Industry standard, per-dataset `staleTime` matches publishing cadence |
-| Charts | `victory-native` (Skia) | 60fps, gesture support, maintained by Shopify |
-| Animations | `react-native-reanimated` + `react-native-gesture-handler` | Required by victory-native; used for shimmers + transitions |
+| Charts | `react-native-gifted-charts` (JS/SVG) | Works directly in Expo Go (no custom dev client), decent feature set, popular. Skia (`victory-native`) is the upgrade path if/when we move to a dev client. |
+| Animations | `react-native-reanimated` + `react-native-gesture-handler` | Used for shimmers + transitions; not required by gifted-charts but already installed |
 | Persistence | `@react-native-async-storage/async-storage` | Standard for non-secret KV |
 | Icons | `lucide-react-native` | Single library, line style, well-maintained |
 | Fonts | `expo-font` | Plus Jakarta Sans loaded at startup |
