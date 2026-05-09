@@ -20,7 +20,9 @@ export function useAppFonts() {
     return () => clearTimeout(timer);
   }, [loaded]);
 
-  if (error) console.warn('[useAppFonts] font load failed:', error);
+  useEffect(() => {
+    if (error) console.warn('[useAppFonts] font load failed:', error);
+  }, [error]);
 
   return loaded || !!error || timedOut;
 }
