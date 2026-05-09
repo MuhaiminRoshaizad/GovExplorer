@@ -14,7 +14,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [override, setOverride] = useSetting<ThemeOverride>('theme', 'system');
+  const [override, setOverride, loaded] = useSetting<ThemeOverride>('theme', 'system');
   const systemScheme = useColorScheme();
 
   const value = useMemo<ThemeContextValue>(() => {
@@ -26,6 +26,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setOverride,
     };
   }, [override, systemScheme, setOverride]);
+
+  if (!loaded) return null;
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
