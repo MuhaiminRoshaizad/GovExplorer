@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Application from 'expo-application';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, useThemeControls, type ThemeOverride } from '@/theme/ThemeProvider';
 import { useI18n, type LanguageOverride } from '@/i18n';
@@ -134,6 +135,30 @@ export default function SettingsScreen() {
                 </View>
               )}
             </SettingsRow>
+          </Card>
+        </View>
+
+        <View style={{ gap: T.spacing.md }}>
+          <SectionHead
+            titleMs={language === 'ms' ? 'Mengenai' : 'About'}
+            titleEn={t('settings.about').toUpperCase()}
+          />
+          <Card>
+            <SettingsRow label={t('settings.aboutVersion')}>
+              <Text style={{ color: T.colors.textMuted, fontFamily: 'Courier' }}>
+                {Application.nativeApplicationVersion ?? '0.0.0'}
+              </Text>
+            </SettingsRow>
+            <Pressable onPress={() => Linking.openURL('https://data.gov.my')}>
+              <SettingsRow label={t('settings.aboutSources')} hint="data.gov.my">
+                <View />
+              </SettingsRow>
+            </Pressable>
+            <Pressable onPress={() => Linking.openURL('https://github.com/MuhaiminRoshaizad/GovExplorer')}>
+              <SettingsRow label={t('settings.aboutGithub')} hint="@MuhaiminRoshaizad/GovExplorer">
+                <View />
+              </SettingsRow>
+            </Pressable>
           </Card>
         </View>
       </ScrollView>
