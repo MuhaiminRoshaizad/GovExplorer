@@ -14,20 +14,26 @@ _Coming soon — once the first screens are built._
 
 ---
 
-## ✨ Planned Features
+## ✨ Features
 
-Still scoping based on what the API actually exposes. Strong candidates:
+**v1 (in progress)** — see [docs/design.md](./docs/design.md) for the full spec.
 
-| Feature | Source API | Why |
+| Feature | Source API | Cadence |
 |---|---|---|
-| 🌤️ **Weather Forecast** | Realtime / Weather | 7-day forecasts (morning, afternoon, night) per location |
-| ⚠️ **Weather & Earthquake Warnings** | Realtime / Weather | Live alerts in EN + BM |
-| ⛽ **Fuel Price Tracker** | Data Catalogue (`fuelprice`) | Weekly diesel / RON95 / RON97 trends |
-| 🚆 **Public Transport** | Realtime / Transport (GTFS-R) | KTM, Rapid KL, etc. live feed |
-| 📈 **Economic Dashboard** | OpenDOSM | CPI, GDP, unemployment indicators |
-| 📊 **Data Catalogue Browser** | Data Catalogue | Search & preview any government dataset |
+| 🌤️ **Weather forecast** | METMalaysia | Daily, scoped to user's state |
+| 🌫️ **Air quality (AQI)** | DOE | Hourly, nearest station |
+| 💱 **Exchange rates** | Bank Negara Malaysia | Daily (business days) |
+| 💧 **Dam water levels** | JPS via data.gov.my | Daily |
+| ⛽ **Fuel prices** | Data Catalogue (`fuelprice`) | Weekly |
+| 📈 **Economic indicators** | DOSM | Monthly — CPI, unemployment |
+| 👥 **Demographics** | DOSM, JPN, JPJ | Births, vehicle registrations, population by state |
+| 📊 **Curated catalogue** | Data Catalogue | Search, filter, favourite |
 
-The exact lineup will firm up as I explore each endpoint.
+**Deferred to v2:**
+
+- 🚆 Public transport (GTFS-Realtime — KTM, Rapid KL)
+- ⚠️ Weather & earthquake warnings
+- ✨ AI-assisted dataset search
 
 ---
 
@@ -37,9 +43,12 @@ The exact lineup will firm up as I explore each endpoint.
 |---|---|
 | Framework | [Expo](https://expo.dev/) (React Native managed workflow) |
 | Language | TypeScript |
-| Navigation | _TBD_ (likely Expo Router) |
-| State | _TBD_ |
-| Data Source | [data.gov.my](https://developer.data.gov.my/) REST API |
+| Navigation | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based) |
+| Server state | [TanStack Query](https://tanstack.com/query) |
+| Charts | [Victory Native](https://commerce.nearform.com/open-source/victory-native) (Skia) |
+| Storage | [`@react-native-async-storage/async-storage`](https://react-native-async-storage.github.io/async-storage/) |
+| Icons | [`lucide-react-native`](https://lucide.dev/) |
+| Data sources | [data.gov.my](https://developer.data.gov.my/), [api.bnm.gov.my](https://api.bnm.gov.my/), [api.met.gov.my](https://api.met.gov.my/) |
 
 ---
 
@@ -90,22 +99,18 @@ GovExplorer/
 
 ---
 
-## 📚 Data Source
+## 📚 Data Sources
 
-All data comes from the Malaysian Government Open Data portal:
+Primary source is the Malaysian Government Open Data portal, with two complementary public APIs for daily-frequency data:
+
+| Source | Base URL | Used for |
+|---|---|---|
+| data.gov.my | `https://api.data.gov.my` | Catalogue datasets (fuel, CPI, population, AQI, dams, etc.) |
+| Bank Negara Malaysia | `https://api.bnm.gov.my/public` | Exchange rates |
+| METMalaysia | `https://api.met.gov.my/v2.1` | Weather forecasts |
 
 - **Browse datasets** → [data.gov.my/data-catalogue](https://data.gov.my/data-catalogue)
 - **API docs** → [developer.data.gov.my](https://developer.data.gov.my/)
-- **Base URL** → `https://api.data.gov.my`
-
-Endpoints we'll explore:
-
-| Endpoint | Purpose |
-|---|---|
-| `GET /data-catalogue?id=<dataset_id>` | Static datasets (e.g. `fuelprice`) |
-| `GET /weather/forecast` | 7-day weather forecasts |
-| `GET /weather/warning` | Active weather warnings |
-| `GET /weather/warning/earthquake` | Earthquake alerts |
 
 ---
 
