@@ -74,9 +74,9 @@ export function IndicatorStrip() {
         emoji="💱"
       />
       <IndicatorTile
-        label="Transit ridership"
+        label="Rail ridership"
         value={ridershipLatest ? new Intl.NumberFormat().format(ridershipLatest) : '—'}
-        hint="rail+bus, yesterday"
+        hint="all rail lines, yesterday"
         spark={ridershipPoints}
         trend={ridershipTrend}
         emoji="🚆"
