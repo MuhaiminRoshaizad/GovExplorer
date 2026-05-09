@@ -23,6 +23,9 @@ export const ms: Dictionary = {
   },
   tabs: {
     home: 'Utama',
+    catalogue: 'Katalog',
+    saved: 'Simpan',
+    settings: 'Tetapan',
   },
   cadence: {
     daily: 'Harian',

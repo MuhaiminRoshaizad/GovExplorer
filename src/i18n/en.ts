@@ -21,6 +21,9 @@ export const en = {
   },
   tabs: {
     home: 'Home',
+    catalogue: 'Catalogue',
+    saved: 'Saved',
+    settings: 'Settings',
   },
   cadence: {
     daily: 'Daily',
