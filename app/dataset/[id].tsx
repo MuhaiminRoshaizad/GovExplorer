@@ -17,6 +17,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DataView } from '@/components/ui/DataView';
 import { useFuelPriceQuery } from '@/api/datasets/fuelPrice';
+import { LineChart } from '@/components/chart/LineChart';
 import { FuelLevelRow } from '@/components/feature/FuelLevelRow';
 import { FuelHistoryHeader, FuelHistoryRow } from '@/components/feature/FuelHistoryRow';
 import type { WeeklyFuelPrice } from '@/types/fuelPrice';
@@ -90,6 +91,24 @@ function FuelDetailBody({ weeks, onRefresh, refreshing }: FuelDetailBodyProps) {
               <StatCard label={t('fuel.low')} value={`RM ${stats.low.toFixed(2)}`} />
               <StatCard label={t('fuel.avg')} value={`RM ${stats.avg.toFixed(2)}`} />
             </View>
+          )}
+          {weeks.length > 1 && (
+            <Card>
+              <Text
+                style={{
+                  fontSize: T.fontSize.label,
+                  color: T.colors.textMuted,
+                  marginBottom: T.spacing.md,
+                }}
+              >
+                RON 95 — {weeks.length} {t('fuel.week').toLowerCase()}
+              </Text>
+              <LineChart
+                data={[...weeks].reverse().map((w) => w.level.ron95)}
+                height={180}
+                yPrefix="RM "
+              />
+            </Card>
           )}
           <View>
             <Text
