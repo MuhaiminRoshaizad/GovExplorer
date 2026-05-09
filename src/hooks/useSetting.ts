@@ -12,13 +12,17 @@ export function useSetting<T>(
 
   useEffect(() => {
     let cancelled = false;
-    AsyncStorage.getItem(KEY_PREFIX + key).then((raw) => {
-      if (cancelled) return;
-      if (raw !== null) {
-        try { setValue(JSON.parse(raw) as T); } catch { /* keep default */ }
-      }
-      setLoaded(true);
-    });
+    AsyncStorage.getItem(KEY_PREFIX + key)
+      .then((raw) => {
+        if (cancelled) return;
+        if (raw !== null) {
+          try { setValue(JSON.parse(raw) as T); } catch { /* keep default */ }
+        }
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => { cancelled = true; };
   }, [key]);
 

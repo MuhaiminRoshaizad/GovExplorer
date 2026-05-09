@@ -19,6 +19,9 @@ export const en = {
     title: 'Explore Malaysia',
     featured: 'Featured',
   },
+  tabs: {
+    home: 'Home',
+  },
   cadence: {
     daily: 'Daily',
     weekly: 'Weekly',

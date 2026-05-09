@@ -48,7 +48,7 @@ export function DataView<T>({
             { backgroundColor: T_.colors.primary, borderRadius: T_.radius.md },
           ]}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: T_.fontWeight.semibold }}>
+          <Text style={{ color: T_.colors.onPrimary, fontWeight: T_.fontWeight.semibold }}>
             {t('common.retry')}
           </Text>
         </Pressable>

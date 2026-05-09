@@ -354,13 +354,17 @@ export function useSetting<T>(
 
   useEffect(() => {
     let cancelled = false;
-    AsyncStorage.getItem(KEY_PREFIX + key).then((raw) => {
-      if (cancelled) return;
-      if (raw !== null) {
-        try { setValue(JSON.parse(raw) as T); } catch { /* keep default */ }
-      }
-      setLoaded(true);
-    });
+    AsyncStorage.getItem(KEY_PREFIX + key)
+      .then((raw) => {
+        if (cancelled) return;
+        if (raw !== null) {
+          try { setValue(JSON.parse(raw) as T); } catch { /* keep default */ }
+        }
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => { cancelled = true; };
   }, [key]);
 
@@ -475,6 +479,9 @@ export const en = {
     title: 'Explore Malaysia',
     featured: 'Featured',
   },
+  tabs: {
+    home: 'Home',
+  },
   cadence: {
     daily: 'Daily',
     weekly: 'Weekly',
@@ -527,6 +534,9 @@ export const ms: Dictionary = {
   home: {
     title: 'Jelajah data Malaysia',
     featured: 'Sorotan',
+  },
+  tabs: {
+    home: 'Utama',
   },
   cadence: {
     daily: 'Harian',
@@ -1092,7 +1102,7 @@ export function DataView<T>({
             { backgroundColor: T_.colors.primary, borderRadius: T_.radius.md },
           ]}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: T_.fontWeight.semibold }}>
+          <Text style={{ color: T_.colors.onPrimary, fontWeight: T_.fontWeight.semibold }}>
             {t('common.retry')}
           </Text>
         </Pressable>
@@ -1229,8 +1239,7 @@ import { useI18n } from '@/i18n';
 
 export default function TabsLayout() {
   const T = useTheme();
-  const { language } = useI18n();
-  const homeLabel = language === 'ms' ? 'Utama' : 'Home';
+  const { t } = useI18n();
 
   return (
     <Tabs
@@ -1247,7 +1256,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: homeLabel,
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
         }}
       />

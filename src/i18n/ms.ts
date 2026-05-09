@@ -21,6 +21,9 @@ export const ms: Dictionary = {
     title: 'Jelajah data Malaysia',
     featured: 'Sorotan',
   },
+  tabs: {
+    home: 'Utama',
+  },
   cadence: {
     daily: 'Harian',
     weekly: 'Mingguan',

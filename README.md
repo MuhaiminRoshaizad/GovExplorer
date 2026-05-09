@@ -80,7 +80,7 @@ Then either:
 - **Android emulator** — press `a` in the terminal
 - **Web** — press `w` in the terminal
 
-Edit `App.tsx` and save — the app reloads instantly via Fast Refresh.
+Edit any file under `app/` or `src/` and save — the app reloads instantly via Fast Refresh.
 
 ---
 

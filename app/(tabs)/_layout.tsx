@@ -5,8 +5,7 @@ import { useI18n } from '@/i18n';
 
 export default function TabsLayout() {
   const T = useTheme();
-  const { language } = useI18n();
-  const homeLabel = language === 'ms' ? 'Utama' : 'Home';
+  const { t } = useI18n();
 
   return (
     <Tabs
@@ -23,7 +22,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: homeLabel,
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
         }}
       />
