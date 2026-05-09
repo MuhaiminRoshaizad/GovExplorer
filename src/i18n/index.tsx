@@ -18,10 +18,16 @@ function detectDeviceLanguage(): Language {
   return /^ms\b/i.test(locale) ? 'ms' : 'en';
 }
 
-type Path<T> = T extends object
-  ? { [K in keyof T]: K extends string ? `${K}` | `${K}.${Path<T[K]>}` : never }[keyof T]
-  : never;
-type TranslationKey = Path<Dictionary>;
+type Leaves<T> = T extends string
+  ? ''
+  : {
+      [K in keyof T & string]: Leaves<T[K]> extends infer R
+        ? R extends ''
+          ? K
+          : `${K}.${R & string}`
+        : never;
+    }[keyof T & string];
+type TranslationKey = Leaves<Dictionary>;
 
 function lookup(dict: Dictionary, key: string): string {
   const parts = key.split('.');
