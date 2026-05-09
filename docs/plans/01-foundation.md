@@ -1278,7 +1278,7 @@ function timeOfDay(): 'morning' | 'afternoon' | 'evening' {
 
 export default function HomeScreen() {
   const T = useTheme();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const greetingKey = `greeting.${timeOfDay()}` as const;
 
   return (
@@ -1303,7 +1303,7 @@ export default function HomeScreen() {
 
         <View>
           <SectionHead
-            titleMs={language === 'ms' ? 'Sorotan' : 'Featured'}
+            titleMs={t('home.featured')}
             titleEn="FEATURED"
           />
           <Link href="/dataset/fuelprice" asChild>
