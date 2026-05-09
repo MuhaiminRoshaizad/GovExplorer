@@ -72,13 +72,11 @@ function FuelDetailBody({ weeks, onRefresh, refreshing }: FuelDetailBodyProps) {
       keyExtractor={(w) => w.date}
       renderItem={({ item }) => <FuelHistoryRow week={item} />}
       ListEmptyComponent={
-        history.length === 0 ? (
-          <View style={{ paddingHorizontal: T.spacing.xl, paddingTop: T.spacing.xl }}>
-            <Text style={{ color: T.colors.textMuted, textAlign: 'center' }}>
-              {t('common.empty')}
-            </Text>
-          </View>
-        ) : null
+        <View style={{ paddingHorizontal: T.spacing.xl, paddingTop: T.spacing.xl }}>
+          <Text style={{ color: T.colors.textMuted, textAlign: 'center' }}>
+            {t('common.empty')}
+          </Text>
+        </View>
       }
       ListHeaderComponent={
         <View style={{ paddingHorizontal: T.spacing.xl, paddingTop: T.spacing.lg, gap: T.spacing.lg }}>
