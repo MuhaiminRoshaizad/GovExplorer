@@ -5,6 +5,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { useI18n } from '@/i18n';
 import { Card } from '@/components/ui/Card';
 import { SectionHead } from '@/components/ui/SectionHead';
+import { IndicatorStrip } from '@/components/feature/IndicatorStrip';
 
 function timeOfDay(): 'morning' | 'afternoon' | 'evening' {
   const h = new Date().getHours();
@@ -15,7 +16,7 @@ function timeOfDay(): 'morning' | 'afternoon' | 'evening' {
 
 export default function HomeScreen() {
   const T = useTheme();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const greetingKey = `greeting.${timeOfDay()}` as const;
 
   return (
@@ -37,6 +38,14 @@ export default function HomeScreen() {
             {t('home.title')}
           </Text>
         </View>
+
+        <View>
+          <SectionHead
+            titleMs={language === 'ms' ? 'Hari ini' : 'Today'}
+            titleEn={t('home.indicators').toUpperCase()}
+          />
+        </View>
+        <IndicatorStrip />
 
         <View>
           <SectionHead
