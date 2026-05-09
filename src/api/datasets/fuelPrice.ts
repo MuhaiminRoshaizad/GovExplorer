@@ -1,7 +1,11 @@
-import { apiGet } from './client';
-import type { FuelPriceRow, WeeklyFuelPrice } from '../types/fuelPrice';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { apiGet } from '@/api/client';
+import type { FuelPriceRow, WeeklyFuelPrice } from '@/types/fuelPrice';
 
-export async function getWeeklyFuelPrices(limit = 26): Promise<WeeklyFuelPrice[]> {
+const QUERY_KEY = ['datasets', 'fuelprice'] as const;
+const STALE_24H = 24 * 60 * 60 * 1000;
+
+async function fetchWeeklyFuelPrices(limit: number): Promise<WeeklyFuelPrice[]> {
   const rows = await apiGet<FuelPriceRow[]>('/data-catalogue', {
     id: 'fuelprice',
     sort: '-date',
@@ -29,9 +33,18 @@ export async function getWeeklyFuelPrices(limit = 26): Promise<WeeklyFuelPrice[]
         ron95_skps: level.ron95_skps,
         ron95_budi95: level.ron95_budi95,
       },
-      change: change ? { ron95: change.ron95, ron97: change.ron97, diesel: change.diesel } : null,
+      change: change
+        ? { ron95: change.ron95, ron97: change.ron97, diesel: change.diesel }
+        : null,
     });
   }
-
   return result.slice(0, limit);
+}
+
+export function useFuelPriceQuery(limit = 26): UseQueryResult<WeeklyFuelPrice[]> {
+  return useQuery({
+    queryKey: [...QUERY_KEY, limit],
+    queryFn: () => fetchWeeklyFuelPrices(limit),
+    staleTime: STALE_24H,
+  });
 }
