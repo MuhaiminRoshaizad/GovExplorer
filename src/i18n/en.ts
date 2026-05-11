@@ -52,6 +52,16 @@ export const en = {
     themeLight: 'Light',
     themeDark: 'Dark',
   },
+  chat: {
+    title: 'Ask GovExplorer',
+    subtitle: 'Your AI guide to Malaysian open data.',
+    placeholder: 'Ask anything about Malaysia’s data…',
+    comingSoon: 'Coming soon',
+    description: 'Soon you’ll be able to chat with an AI assistant trained on Malaysia’s open data. Ask for trends, comparisons, or instant summaries.',
+    sampleQuestion1: 'How has inflation changed in 2025?',
+    sampleQuestion2: 'Which state has the highest population growth?',
+    sampleQuestion3: 'Compare LRT vs MRT ridership.',
+  },
   onboarding: {
     skip: 'Skip',
     next: 'Next',

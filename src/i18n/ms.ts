@@ -54,6 +54,16 @@ export const ms: Strings = {
     themeLight: 'Terang',
     themeDark: 'Gelap',
   },
+  chat: {
+    title: 'Tanya GovExplorer',
+    subtitle: 'Panduan AI untuk data terbuka Malaysia.',
+    placeholder: 'Tanya apa-apa tentang data Malaysia…',
+    comingSoon: 'Akan datang',
+    description: 'Tidak lama lagi anda boleh berbual dengan pembantu AI yang dilatih dengan data terbuka Malaysia. Tanya trend, perbandingan, atau ringkasan segera.',
+    sampleQuestion1: 'Bagaimana inflasi berubah pada 2025?',
+    sampleQuestion2: 'Negeri mana mempunyai pertumbuhan penduduk tertinggi?',
+    sampleQuestion3: 'Bandingkan penumpang LRT dan MRT.',
+  },
   onboarding: {
     skip: 'Langkau',
     next: 'Seterusnya',
