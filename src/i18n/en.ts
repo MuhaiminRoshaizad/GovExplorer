@@ -19,7 +19,7 @@ export const en = {
     today: 'Today',
     explore: 'Explore',
     insights: 'Insights',
-    settings: 'Settings',
+    about: 'About',
   },
   today: {
     greetingMorning: 'Good morning',
@@ -44,7 +44,7 @@ export const en = {
     society: 'Population & society',
   },
   settings: {
-    title: 'Settings',
+    title: 'About',
     appearance: 'Appearance',
     language: 'Language',
     location: 'Location',
@@ -52,6 +52,34 @@ export const en = {
     themeSystem: 'Match system',
     themeLight: 'Light',
     themeDark: 'Dark',
+  },
+  about: {
+    tagline: 'Malaysian open data, beautifully.',
+    description:
+      'A daily glance at Malaysia — economy, transit, climate, and people — powered by data.gov.my. No login, no tracking, just clean public data.',
+    features: {
+      today: 'Daily pulse',
+      explore: 'Interactive map',
+      insights: 'Editorial insights',
+      chat: 'AI assistant',
+    },
+    sections: {
+      preferences: 'Preferences',
+      info: 'About',
+      legal: 'Legal',
+    },
+    rows: {
+      dataSource: 'Data source',
+      dataSourceValue: 'data.gov.my',
+      privacy: 'Privacy',
+      privacyValue: 'No login, no tracking',
+      version: 'Version',
+      source: 'Source code',
+      sourceValue: 'GitHub',
+      terms: 'Terms of use',
+      privacyPolicy: 'Privacy policy',
+    },
+    madeBy: 'Made with care for Malaysia.',
   },
   chat: {
     title: 'Ask GovExplorer',

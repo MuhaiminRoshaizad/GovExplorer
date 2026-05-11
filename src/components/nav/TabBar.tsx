@@ -47,7 +47,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     index: t.tabs.today,
     explore: t.tabs.explore,
     insights: t.tabs.insights,
-    settings: t.tabs.settings,
+    settings: t.tabs.about,
   };
 
   // Split routes into left + right of the center FAB

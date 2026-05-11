@@ -21,7 +21,7 @@ export const ms: Strings = {
     today: 'Utama',
     explore: 'Terokai',
     insights: 'Wawasan',
-    settings: 'Tetapan',
+    about: 'Mengenai',
   },
   today: {
     greetingMorning: 'Selamat pagi',
@@ -46,7 +46,7 @@ export const ms: Strings = {
     society: 'Penduduk & masyarakat',
   },
   settings: {
-    title: 'Tetapan',
+    title: 'Mengenai',
     appearance: 'Penampilan',
     language: 'Bahasa',
     location: 'Lokasi',
@@ -54,6 +54,34 @@ export const ms: Strings = {
     themeSystem: 'Ikut sistem',
     themeLight: 'Terang',
     themeDark: 'Gelap',
+  },
+  about: {
+    tagline: 'Data terbuka Malaysia, dipersembahkan dengan indah.',
+    description:
+      'Pandangan harian Malaysia — ekonomi, transit, iklim, dan rakyat — dikuasakan oleh data.gov.my. Tanpa log masuk, tanpa penjejakan, hanya data awam yang bersih.',
+    features: {
+      today: 'Nadi harian',
+      explore: 'Peta interaktif',
+      insights: 'Wawasan editorial',
+      chat: 'Pembantu AI',
+    },
+    sections: {
+      preferences: 'Keutamaan',
+      info: 'Mengenai',
+      legal: 'Perundangan',
+    },
+    rows: {
+      dataSource: 'Sumber data',
+      dataSourceValue: 'data.gov.my',
+      privacy: 'Privasi',
+      privacyValue: 'Tanpa log masuk, tanpa penjejakan',
+      version: 'Versi',
+      source: 'Kod sumber',
+      sourceValue: 'GitHub',
+      terms: 'Syarat penggunaan',
+      privacyPolicy: 'Dasar privasi',
+    },
+    madeBy: 'Dibina dengan teliti untuk Malaysia.',
   },
   chat: {
     title: 'Tanya GovExplorer',
