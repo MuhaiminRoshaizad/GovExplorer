@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Card, Stack, Tap, Text } from '@/components/ui';
+import { Card, Skeleton, Stack, Tap, Text } from '@/components/ui';
 import { Motion, R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
@@ -23,6 +23,18 @@ const TONE_MAP: Record<Tone, (t: ReturnType<typeof useTheme>['theme']) => { bg: 
   'chart-coral': (t) => ({ bg: 'rgba(226,109,92,0.14)', fg: t.chart.coral }),
 };
 
+type Props = {
+  label: string;
+  value?: string;
+  unit?: string;
+  Icon: LucideIcon;
+  tone?: Tone;
+  index?: number;
+  isLoading?: boolean;
+  isError?: boolean;
+  onPress?: () => void;
+};
+
 export function StatTile({
   label,
   value,
@@ -30,16 +42,10 @@ export function StatTile({
   Icon,
   tone = 'brand',
   index = 0,
+  isLoading = false,
+  isError = false,
   onPress,
-}: {
-  label: string;
-  value: string;
-  unit?: string;
-  Icon: LucideIcon;
-  tone?: Tone;
-  index?: number;
-  onPress?: () => void;
-}) {
+}: Props) {
   const { theme } = useTheme();
   const colors = TONE_MAP[tone](theme);
 
@@ -55,6 +61,8 @@ export function StatTile({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
   }));
+
+  const displayValue = isError ? '—' : value ?? '';
 
   return (
     <Animated.View style={[{ flex: 1 }, animStyle]}>
@@ -75,10 +83,20 @@ export function StatTile({
             </View>
           </Stack>
           <View style={{ marginTop: S.lg }}>
-            <Stack direction="row" align="baseline" gap={S.xs}>
-              <Text variant="h1">{value}</Text>
-              {unit ? <Text variant="bodyMedium" tone="muted">{unit}</Text> : null}
-            </Stack>
+            {isLoading ? (
+              <Skeleton width={72} height={26} />
+            ) : (
+              <Stack direction="row" align="baseline" gap={S.xs}>
+                <Text variant="h1" tone={isError ? 'muted' : 'default'}>
+                  {displayValue}
+                </Text>
+                {unit && !isError ? (
+                  <Text variant="bodyMedium" tone="muted">
+                    {unit}
+                  </Text>
+                ) : null}
+              </Stack>
+            )}
             <Text variant="caption" tone="soft" style={{ marginTop: S.xxs }}>
               {label}
             </Text>
