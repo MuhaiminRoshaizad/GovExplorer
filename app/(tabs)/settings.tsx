@@ -3,6 +3,7 @@ import { ChevronRight, Globe, Info, MapPin, Moon, Sun, SunMoon } from 'lucide-re
 import type { LucideIcon } from 'lucide-react-native';
 import { View } from 'react-native';
 
+import { ScreenEnter } from '@/components/system/ScreenEnter';
 import { Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
 import { useI18n, type Language } from '@/i18n';
 import { R, S } from '@/theme';
@@ -21,6 +22,7 @@ export default function Settings() {
 
   return (
     <ScreenScroll>
+      <ScreenEnter>
       <View style={{ marginTop: S.md }}>
         <Text variant="hero">{t.settings.title}</Text>
       </View>
@@ -106,6 +108,7 @@ export default function Settings() {
         <Divider />
         <Row Icon={Info} label="Version" value={Constants.expoConfig?.version ?? '1.0.0'} hideChevron />
       </Card>
+      </ScreenEnter>
     </ScreenScroll>
   );
 }

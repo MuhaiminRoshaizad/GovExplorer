@@ -2,6 +2,7 @@ import { ChevronRight, Cloud, LineChart, TrendingUp, Users } from 'lucide-react-
 import type { LucideIcon } from 'lucide-react-native';
 import { View } from 'react-native';
 
+import { ScreenEnter } from '@/components/system/ScreenEnter';
 import { Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
 import { useI18n } from '@/i18n';
 import { R, S } from '@/theme';
@@ -34,6 +35,7 @@ export default function Insights() {
 
   return (
     <ScreenScroll>
+      <ScreenEnter>
       <View style={{ marginTop: S.md }}>
         <Text variant="hero">{t.insights.title}</Text>
         <Text variant="bodyLg" tone="soft" style={{ marginTop: S.xs }}>
@@ -74,6 +76,7 @@ export default function Insights() {
           );
         })}
       </Stack>
+      </ScreenEnter>
     </ScreenScroll>
   );
 }

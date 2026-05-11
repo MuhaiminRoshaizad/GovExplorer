@@ -1,6 +1,7 @@
 import { Compass } from 'lucide-react-native';
 import { View } from 'react-native';
 
+import { ScreenEnter } from '@/components/system/ScreenEnter';
 import { Badge, Card, Screen, Stack, Text } from '@/components/ui';
 import { useI18n } from '@/i18n';
 import { R, S } from '@/theme';
@@ -12,6 +13,7 @@ export default function Explore() {
 
   return (
     <Screen>
+      <ScreenEnter>
       <View style={{ marginTop: S.md }}>
         <Badge label="COMING SOON" tone="brand" />
         <Text variant="hero" style={{ marginTop: S.sm }}>
@@ -52,6 +54,7 @@ export default function Explore() {
           <Badge label="REANIMATED" />
         </Stack>
       </Card>
+      </ScreenEnter>
     </Screen>
   );
 }
