@@ -1,8 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { type ReactNode } from 'react';
-import { ScrollView, View, type ScrollViewProps, type ViewProps } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, type ReactNode } from 'react';
+import { View, type ScrollViewProps, type ViewProps } from 'react-native';
+import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useScrollY } from '@/components/system/ScrollContext';
 import { S, TAB_BAR_CLEARANCE } from '@/theme';
 import { useTheme } from '@/theme';
 
@@ -49,8 +52,22 @@ export function ScreenScroll({
 }: ScrollViewProps & Common) {
   const { theme, mode } = useTheme();
   const insets = useSafeAreaInsets();
+  const scrollY = useScrollY();
+
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = Math.max(0, e.contentOffset.y);
+    },
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollY.value = 0;
+    }, [scrollY])
+  );
+
   return (
-    <ScrollView
+    <Animated.ScrollView
       style={{ flex: 1, backgroundColor: theme.bg }}
       contentContainerStyle={[
         {
@@ -60,11 +77,13 @@ export function ScreenScroll({
         },
         contentContainerStyle,
       ]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
       {...rest}
     >
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
