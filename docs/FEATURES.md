@@ -29,8 +29,10 @@ The home tab. The goal: a person opens the app each morning and feels like Malay
 | Block | Component | Notes |
 |---|---|---|
 | Greeting + streak chip | `Greeting` | Time-of-day aware. Streak chip only shows for streaks ≥ 2. Brand line `Malaysia, today.` is bilingual. |
-| Pulse hero | `PulseHero` | Live MYR/USD rate from BNM with a pulsing indicator on the UI thread. |
-| 2×2 stat tiles | `StatTile` | Wired to live data: MYR/USD (BNM), rail ridership (Prasarana), RON95 (KPDN), inflation YoY (DOSM). Each tile shows a `Skeleton` while loading and an em-dash on error. Staggered entrance via Reanimated worklets. |
+| Pulse hero | `PulseHero` | Live USD/MYR rate from BNM with a pulsing indicator on the UI thread. |
+| 2×2 stat tiles | `StatTile` | Wired to live data: USD/MYR (BNM), rail ridership (Prasarana), RON95 (KPDN), inflation YoY (DOSM, computed). Each tile shows a `Skeleton` while loading and an em-dash on error. Staggered entrance via Reanimated worklets. |
+| **This week** sparklines | `WeekTrends` | Horizontal scroll of 3 mini-cards (inflation, ridership, fuel) with a small Reanimated line chart inside each. Tap any card → dataset detail. |
+| **Featured insights** scroll | `FeaturedInsights` | Horizontal scroll of 5 highlighted datasets (GDP, unemployment, population, FX, fuel) — each card opens the dataset detail screen. |
 | Surprise reveal | `SurpriseCard` | Tap to reveal a "did you know" fact — derived from ridership data when available. Spring rotation animation. |
 
 **Light gamification (planned):**
@@ -66,7 +68,9 @@ Category list → chart screen pattern.
 | Climate & environment | Weather, rainfall, AQI, water levels |
 | Population & society | Population by state, births/deaths, unemployment, household income |
 
-**Layout (v1.1):** Sectioned vertical layout — one section per category. Each section has a header (icon + name + dataset count) and a **horizontal-scrolling list** of dataset cards. The horizontal list escapes `ScreenScroll`'s padding via a negative-margin trick so cards visually scroll to the screen edge.
+**Layout (v1.1):** Sectioned vertical layout — one section per category, **7 categories** (Economy, Transport, Environment, Society, Healthcare, Public safety, Connectivity), **35+ datasets** total. Each section has a header (icon + name + dataset count) and a **horizontal-scrolling list** of dataset cards. The horizontal list escapes `ScreenScroll`'s padding via a negative-margin trick so cards visually scroll to the screen edge.
+
+**Cadence filter chips** sit between the screen title and the first section. Tapping a chip (`Daily`, `Weekly`, `Monthly`, `Quarterly`, `Annual`) filters datasets across all categories to the matching frequency; categories with no matches are hidden. "All" clears the filter.
 
 **Dataset card** (~200×160px):
 - Tone-tinted icon (top-left)
@@ -110,14 +114,17 @@ A SelawatHub-inspired About page that combines app identity with preferences. Ta
 
 1. **Hero** — centered Compass logo in a brand-glow tile, "GovExplorer" + version, tagline, description (bilingual)
 2. **Feature list** — 4 rows (Daily pulse, Interactive map, Editorial insights, AI assistant) with tone-tinted icons
-3. **Preferences section** — two **rows with trailing value** that open `BottomSheet` pickers:
+3. **Preferences section** — **three rows with trailing value** that open `BottomSheet` pickers:
    - Appearance → System / Light / Dark
    - Language → English / Bahasa Melayu
+   - **Home state** → 13 states + 3 federal territories (scrollable sheet, persisted via `AsyncStorage`)
 4. **About section** — Data source, Privacy, Source code (link to GitHub)
 5. **Legal section** — Terms of use, Privacy policy (placeholder rows)
 6. **Footer** — "Made with care for Malaysia."
 
-The bottom-sheet pattern (row → tap → sheet with options) mirrors SelawatHub's language picker and is more compact than inline chips.
+The bottom-sheet pattern (row → tap → sheet with options) mirrors SelawatHub's language picker and is more compact than inline chips. The `BottomSheet` primitive caps at 85% screen height and scrolls its content, so the 16-state list works without overflow.
+
+**Location strategy:** state picker, not geolocation permission. The app is "no login, no tracking" so we don't ask for system location. Users explicitly choose their home state; persisted state is available to future features that filter by region (rainfall, ridership by station, crime by district, etc.).
 
 ---
 
