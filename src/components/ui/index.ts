@@ -4,3 +4,4 @@ export { Tap } from './Tap';
 export { Stack } from './Stack';
 export { Badge } from './Badge';
 export { Screen, ScreenScroll } from './Screen';
+export { BottomSheet } from './BottomSheet';
