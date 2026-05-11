@@ -13,7 +13,16 @@ type Props = Omit<PressableProps, 'children'> & {
   haptic?: 'none' | 'light' | 'medium' | 'heavy' | 'selection';
 };
 
-export function Tap({ children, scaleTo = 0.97, haptic = 'light', onPressIn, onPressOut, onPress, ...rest }: Props) {
+export function Tap({
+  children,
+  scaleTo = 0.97,
+  haptic = 'light',
+  style,
+  onPressIn,
+  onPressOut,
+  onPress,
+  ...rest
+}: Props) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -22,7 +31,7 @@ export function Tap({ children, scaleTo = 0.97, haptic = 'light', onPressIn, onP
 
   return (
     <AnimatedPressable
-      style={animatedStyle}
+      style={[animatedStyle, style]}
       onPressIn={(e) => {
         scale.value = withSpring(scaleTo, Motion.spring.snappy);
         onPressIn?.(e);
