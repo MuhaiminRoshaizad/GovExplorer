@@ -1,10 +1,11 @@
 import { ArrowDownRight, ArrowUpRight, Lightbulb } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Dimensions, View } from 'react-native';
+import { Dimensions, ScrollView, View } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
 import { Badge, Card, Skeleton, Stack, Text } from '@/components/ui';
 import { useStatePref } from '@/data/StateContext';
+import { stateCodeFor } from '@/data/states';
 import { formatCompact, formatDate, formatNumber, formatPercent, formatYear } from '@/lib/format';
 import {
   useCategoricalSnapshotQuery,
@@ -31,7 +32,9 @@ import { categoricalAnalysis, timeSeriesAnalysis } from './analysis';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_INSET = S.lg * 2 + S.md * 2;
 const CHART_WIDTH = SCREEN_WIDTH - CHART_INSET;
-const X_AXIS_HEIGHT = 56;
+const X_AXIS_HEIGHT = 64;
+const SCROLL_THRESHOLD = 8;
+const BAR_SLOT = 38;
 
 type Tone = { color: string; bg: string };
 export type DetailProps = { tone: Tone };
@@ -414,15 +417,23 @@ export function GenericBarDetail({
   const userStateMatch =
     isStateChart ? points.find((p) => p.name === userState.apiName) : undefined;
 
+  const labelFor = (name: string) =>
+    categoryField === 'state' ? stateCodeFor(name) : shortLabel(name, 6);
+
   const data = points.map((p) => {
     const isUserState = isStateChart && p.name === userState.apiName;
     return {
       value: p.value,
-      label: shortLabel(p.name, 6),
+      label: labelFor(p.name),
       fullLabel: p.name,
       frontColor: isUserState ? theme.accent.base : tone.color,
     };
   });
+
+  const scrollable = data.length > SCROLL_THRESHOLD;
+  const barWidth = scrollable ? 22 : Math.max(8, Math.min(20, (CHART_WIDTH - 40) / data.length - 8));
+  const spacing = scrollable ? 16 : Math.max(4, (CHART_WIDTH - 40) / data.length - 14);
+  const renderWidth = scrollable ? data.length * BAR_SLOT + 64 : CHART_WIDTH;
 
   const insights = categoricalAnalysis(points, {
     unit,
@@ -465,29 +476,35 @@ export function GenericBarDetail({
       ) : null}
 
       <ChartCard
-        title={chartTitle}
+        title={`${chartTitle}${scrollable ? ' · scroll →' : ''}`}
         isLoading={q.isLoading}
         isError={q.isError}
         empty={data.length === 0}
       >
-        <BarChart
-          data={data}
-          width={CHART_WIDTH}
-          height={220}
-          barWidth={Math.max(8, Math.min(20, (CHART_WIDTH - 40) / data.length - 8))}
-          spacing={Math.max(4, (CHART_WIDTH - 40) / data.length - 14)}
-          frontColor={tone.color}
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          hideRules
-          formatYLabel={(v: string) => formatCompact(Number(v))}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
-          xAxisLabelsHeight={X_AXIS_HEIGHT}
-          rotateLabel={rotateLabel}
-          noOfSections={3}
-          renderTooltip={barTooltip(tone, formatHero, unit)}
-        />
+        <ScrollView
+          horizontal={scrollable}
+          scrollEnabled={scrollable}
+          showsHorizontalScrollIndicator={false}
+        >
+          <BarChart
+            data={data}
+            width={renderWidth}
+            height={240}
+            barWidth={barWidth}
+            spacing={spacing}
+            frontColor={tone.color}
+            yAxisColor="transparent"
+            xAxisColor={theme.border}
+            hideRules
+            formatYLabel={(v: string) => formatCompact(Number(v))}
+            yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelsHeight={X_AXIS_HEIGHT}
+            rotateLabel={rotateLabel}
+            noOfSections={3}
+            renderTooltip={barTooltip(tone, formatHero, unit)}
+          />
+        </ScrollView>
       </ChartCard>
 
       <AnalysisCard insights={insights} isLoading={q.isLoading} />
@@ -685,29 +702,31 @@ export function RidershipDetail({ tone }: DetailProps) {
         />
       </ChartCard>
       <ChartCard
-        title="By service · latest day"
+        title="By service · latest day · scroll →"
         isLoading={latest.isLoading}
         isError={latest.isError}
         empty={barData.length === 0}
       >
-        <BarChart
-          data={barData}
-          width={CHART_WIDTH}
-          height={240}
-          barWidth={18}
-          spacing={14}
-          frontColor={tone.color}
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          hideRules
-          formatYLabel={(v: string) => formatCompact(Number(v))}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
-          xAxisLabelsHeight={X_AXIS_HEIGHT}
-          rotateLabel
-          noOfSections={3}
-          renderTooltip={barTooltip(tone, formatCompact, 'trips')}
-        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <BarChart
+            data={barData}
+            width={barData.length * BAR_SLOT + 64}
+            height={260}
+            barWidth={22}
+            spacing={16}
+            frontColor={tone.color}
+            yAxisColor="transparent"
+            xAxisColor={theme.border}
+            hideRules
+            formatYLabel={(v: string) => formatCompact(Number(v))}
+            yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelsHeight={X_AXIS_HEIGHT}
+            rotateLabel
+            noOfSections={3}
+            renderTooltip={barTooltip(tone, formatCompact, 'trips')}
+          />
+        </ScrollView>
       </ChartCard>
       <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
@@ -898,7 +917,7 @@ export function PopulationDetail({ tone }: DetailProps) {
 
   const data = byState.map((s) => ({
     value: s.population,
-    label: shortLabel(s.state, 6),
+    label: stateCodeFor(s.state),
     fullLabel: s.state,
     frontColor: s.state === userState.apiName ? theme.accent.base : tone.color,
   }));
@@ -906,11 +925,13 @@ export function PopulationDetail({ tone }: DetailProps) {
   const insights = categoricalAnalysis(
     byState.map((s) => ({ name: s.state, value: s.population })),
     {
-      unit: 'thousand',
       fmt: (v) => formatCompact(v * 1000),
       userStateName: userState.apiName,
     }
   );
+
+  const scrollable = data.length > SCROLL_THRESHOLD;
+  const renderWidth = scrollable ? data.length * BAR_SLOT + 64 : CHART_WIDTH;
 
   return (
     <>
@@ -944,29 +965,35 @@ export function PopulationDetail({ tone }: DetailProps) {
       ) : null}
 
       <ChartCard
-        title={`By state · ${q.data ? formatYear(q.data.asOf) : ''}`}
+        title={`By state · ${q.data ? formatYear(q.data.asOf) : ''}${scrollable ? ' · scroll →' : ''}`}
         isLoading={q.isLoading}
         isError={q.isError}
         empty={data.length === 0}
       >
-        <BarChart
-          data={data}
-          width={CHART_WIDTH}
-          height={260}
-          barWidth={14}
-          spacing={10}
-          frontColor={tone.color}
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          hideRules
-          formatYLabel={(v: string) => formatCompact(Number(v) * 1000)}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
-          xAxisLabelsHeight={X_AXIS_HEIGHT}
-          rotateLabel
-          noOfSections={3}
-          renderTooltip={barTooltip(tone, (v) => formatCompact(v * 1000), 'people')}
-        />
+        <ScrollView
+          horizontal={scrollable}
+          scrollEnabled={scrollable}
+          showsHorizontalScrollIndicator={false}
+        >
+          <BarChart
+            data={data}
+            width={renderWidth}
+            height={260}
+            barWidth={22}
+            spacing={16}
+            frontColor={tone.color}
+            yAxisColor="transparent"
+            xAxisColor={theme.border}
+            hideRules
+            formatYLabel={(v: string) => formatCompact(Number(v) * 1000)}
+            yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+            xAxisLabelsHeight={X_AXIS_HEIGHT}
+            rotateLabel
+            noOfSections={3}
+            renderTooltip={barTooltip(tone, (v) => formatCompact(v * 1000), 'people')}
+          />
+        </ScrollView>
       </ChartCard>
       <AnalysisCard insights={insights} isLoading={q.isLoading} />
     </>

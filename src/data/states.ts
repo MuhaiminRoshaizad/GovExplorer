@@ -46,3 +46,10 @@ export function findState(code: StateCode | string): MalaysiaState | undefined {
 }
 
 export const DEFAULT_STATE_CODE: StateCode = 'kul';
+
+export function stateCodeFor(apiName: string): string {
+  const state = STATES.find((s) => s.apiName === apiName);
+  if (state) return state.code.toUpperCase();
+  const fallback = apiName.replace(/^W\.P\.\s*/i, '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
+  return fallback || apiName.slice(0, 3).toUpperCase();
+}
