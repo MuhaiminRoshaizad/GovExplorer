@@ -34,7 +34,7 @@ export const ms: Strings = {
     surpriseTap: 'Ketik untuk dedahkan',
   },
   explore: {
-    title: 'Terokai peta',
+    title: 'Terokai Malaysia',
     subtitle: 'Ketik mana-mana negeri untuk lihat kisahnya.',
   },
   insights: {

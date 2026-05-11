@@ -32,7 +32,7 @@ export const en = {
     surpriseTap: 'Tap to reveal',
   },
   explore: {
-    title: 'Explore the map',
+    title: 'Explore Malaysia',
     subtitle: 'Tap a state to see its story.',
   },
   insights: {
