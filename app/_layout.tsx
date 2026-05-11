@@ -70,16 +70,20 @@ function AppNavigator() {
         <RouterStack.Screen
           name="onboarding"
           options={{
-            presentation: 'modal',
+            presentation: 'card',
             animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
             contentStyle: { backgroundColor: theme.bg },
           }}
         />
         <RouterStack.Screen
           name="chat"
           options={{
-            presentation: 'modal',
+            presentation: 'card',
             animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
             contentStyle: { backgroundColor: theme.bg },
           }}
         />
