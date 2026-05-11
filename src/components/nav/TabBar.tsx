@@ -9,7 +9,7 @@ import { useI18n } from '@/i18n';
 import { Motion, R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
-import { Tap, Text } from '../ui';
+import { Tap } from '../ui';
 
 const ICONS: Record<string, LucideIcon> = {
   index: Home,
@@ -35,12 +35,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       style={{
         flexDirection: 'row',
         backgroundColor: theme.surface,
-        borderTopWidth: 1,
-        borderTopColor: theme.border,
-        paddingTop: S.sm,
-        paddingBottom: insets.bottom + S.sm,
-        paddingHorizontal: S.md,
-        gap: S.xs,
+        paddingTop: S.lg,
+        paddingBottom: insets.bottom + S.md,
+        paddingHorizontal: S.lg,
       }}
     >
       {state.routes.map((route, index) => {
@@ -77,48 +74,40 @@ function TabButton({
   onPress: () => void;
 }) {
   const { theme } = useTheme();
-  const iconScale = useSharedValue(focused ? 1.05 : 1);
+  const indicator = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
-    iconScale.value = withSpring(focused ? 1.05 : 1, Motion.spring.snappy);
-  }, [focused, iconScale]);
+    indicator.value = withSpring(focused ? 1 : 0, Motion.spring.snappy);
+  }, [focused, indicator]);
 
-  const wrapperStyle = useAnimatedStyle(() => ({
-    backgroundColor: focused ? theme.brand.glow : 'transparent',
+  const dotStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: indicator.value }],
+    opacity: indicator.value,
   }));
 
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
-  }));
+  const color = focused ? theme.text : theme.textMuted;
 
   return (
-    <Tap haptic="selection" onPress={onPress} style={{ flex: 1 }}>
+    <Tap
+      haptic="selection"
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: focused }}
+      style={{ flex: 1, alignItems: 'center', paddingVertical: S.xs, gap: 8 }}
+    >
+      <Icon size={22} color={color} strokeWidth={focused ? 2 : 1.6} />
       <Animated.View
         style={[
           {
-            paddingVertical: S.sm,
-            paddingHorizontal: S.sm,
-            borderRadius: R.lg,
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
+            width: 16,
+            height: 2,
+            borderRadius: R.pill,
+            backgroundColor: theme.brand.base,
           },
-          wrapperStyle,
+          dotStyle,
         ]}
-      >
-        <Animated.View style={iconStyle}>
-          <Icon size={22} color={focused ? theme.brand.base : theme.textMuted} strokeWidth={focused ? 2.2 : 1.8} />
-        </Animated.View>
-        <Text
-          variant="micro"
-          style={{
-            color: focused ? theme.brand.base : theme.textMuted,
-            letterSpacing: 0.6,
-          }}
-        >
-          {label}
-        </Text>
-      </Animated.View>
+      />
     </Tap>
   );
 }
