@@ -21,6 +21,8 @@ export const R = {
   pill: 999,
 } as const;
 
+export const TAB_BAR_CLEARANCE = 110;
+
 export const Z = {
   base: 0,
   card: 1,

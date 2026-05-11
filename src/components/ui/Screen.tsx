@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { ScrollView, View, type ScrollViewProps, type ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { S } from '@/theme';
+import { S, TAB_BAR_CLEARANCE } from '@/theme';
 import { useTheme } from '@/theme';
 
 type Common = {
@@ -28,6 +28,7 @@ export function Screen({
           flex: 1,
           backgroundColor: theme.bg,
           paddingTop: edgeInset ? insets.top : 0,
+          paddingBottom: insets.bottom + TAB_BAR_CLEARANCE,
           paddingHorizontal,
         },
         style,
@@ -55,7 +56,7 @@ export function ScreenScroll({
         {
           paddingTop: insets.top + S.sm,
           paddingHorizontal,
-          paddingBottom: insets.bottom + S.huge,
+          paddingBottom: insets.bottom + TAB_BAR_CLEARANCE,
         },
         contentContainerStyle,
       ]}
