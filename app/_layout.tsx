@@ -14,9 +14,10 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { TransitionOverlay } from '@/components/system/TransitionOverlay';
 import { I18nProvider } from '@/i18n';
 import { queryClient } from '@/lib/queryClient';
-import { ThemeProvider } from '@/theme';
+import { ThemeProvider, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -44,21 +45,46 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <I18nProvider>
-              <RouterStack screenOptions={{ headerShown: false, animation: 'fade' }}>
-                <RouterStack.Screen name="(tabs)" />
-                <RouterStack.Screen
-                  name="onboarding"
-                  options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-                />
-                <RouterStack.Screen
-                  name="chat"
-                  options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-                />
-              </RouterStack>
+              <AppNavigator />
             </I18nProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function AppNavigator() {
+  const { theme } = useTheme();
+
+  return (
+    <>
+      <RouterStack
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          contentStyle: { backgroundColor: theme.bg },
+        }}
+      >
+        <RouterStack.Screen name="(tabs)" />
+        <RouterStack.Screen
+          name="onboarding"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            contentStyle: { backgroundColor: theme.bg },
+          }}
+        />
+        <RouterStack.Screen
+          name="chat"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            contentStyle: { backgroundColor: theme.bg },
+          }}
+        />
+      </RouterStack>
+      <TransitionOverlay />
+    </>
   );
 }
