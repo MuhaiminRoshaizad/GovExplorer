@@ -2,10 +2,12 @@ import { Coins, Fuel, Train, TrendingUp } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { ScreenScroll, Stack } from '@/components/ui';
+import { FeaturedInsights } from '@/features/today/FeaturedInsights';
 import { Greeting } from '@/features/today/Greeting';
 import { PulseHero } from '@/features/today/PulseHero';
 import { StatTile } from '@/features/today/StatTile';
 import { SurpriseCard } from '@/features/today/SurpriseCard';
+import { WeekTrends } from '@/features/today/WeekTrends';
 import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import {
   useCurrencyLatestQuery,
@@ -79,6 +81,10 @@ export default function Today() {
           index={3}
         />
       </Stack>
+
+      <WeekTrends />
+
+      <FeaturedInsights />
 
       <View style={{ marginTop: S.xl }}>
         <SurpriseCard
