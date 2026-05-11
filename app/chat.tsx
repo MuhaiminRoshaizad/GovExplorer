@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { ArrowUp, Sparkles, X } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { View } from 'react-native';
@@ -19,7 +20,7 @@ import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
 export default function ChatScreen() {
-  const { theme } = useTheme();
+  const { theme, mode } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
@@ -43,6 +44,7 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: insets.top }}>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <Stack
         direction="row"
         align="center"

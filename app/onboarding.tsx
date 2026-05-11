@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { ArrowRight, BarChart3, Map, Sparkles } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useRef, useState } from 'react';
@@ -18,7 +19,7 @@ type Slide = { key: string; title: string; body: string; Icon: LucideIcon; tone:
 
 export default function Onboarding() {
   const { t } = useI18n();
-  const { theme } = useTheme();
+  const { theme, mode } = useTheme();
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Slide>>(null);
@@ -44,6 +45,7 @@ export default function Onboarding() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: insets.top }}>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <Stack direction="row" justify="flex-end" style={{ paddingHorizontal: S.lg, paddingTop: S.md }}>
         <Tap haptic="selection" onPress={finish}>
           <Text variant="bodyMedium" tone="soft" style={{ paddingHorizontal: S.md, paddingVertical: S.sm }}>
