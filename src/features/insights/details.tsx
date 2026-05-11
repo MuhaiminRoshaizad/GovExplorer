@@ -6,6 +6,7 @@ import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { Badge, Card, Skeleton, Stack, Text } from '@/components/ui';
 import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
 import {
+  useCategoricalSnapshotQuery,
   useCurrencyHistoryQuery,
   useCurrencyLatestQuery,
   useFuelPriceHistoryQuery,
@@ -17,6 +18,8 @@ import {
   usePopulationLatestQuery,
   useRidershipHistoryQuery,
   useRidershipLatestQuery,
+  useScalarLatestQuery,
+  useTimeSeriesQuery,
   useUnemploymentHistoryQuery,
   useUnemploymentLatestQuery,
 } from '@/lib/queries';
@@ -129,6 +132,11 @@ function ChartCard({
   );
 }
 
+function shortLabel(name: string, max = 9): string {
+  if (name.length <= max) return name;
+  return name.slice(0, max - 1) + '…';
+}
+
 // ─────────────────────────── Coming soon ───────────────────────────
 
 export function ComingSoonDetail() {
@@ -145,7 +153,166 @@ export function ComingSoonDetail() {
   );
 }
 
-// ─────────────────────────── Currency ───────────────────────────
+// ─────────────────────────── Generic detail components ───────────────────────────
+
+type GenericTSProps = DetailProps & {
+  datasetId: string;
+  valueField: string;
+  filterField?: string;
+  filterValue?: string;
+  unit?: string;
+  formatHero?: (v: number) => string;
+  chartTitle: string;
+  limit?: number;
+};
+
+export function GenericLineDetail({
+  tone,
+  datasetId,
+  valueField,
+  filterField,
+  filterValue,
+  unit,
+  formatHero,
+  chartTitle,
+  limit = 60,
+}: GenericTSProps) {
+  const { theme } = useTheme();
+  const q = useTimeSeriesQuery({ id: datasetId, valueField, filterField, filterValue, limit });
+  const data = (q.data ?? []).map((p) => ({ value: p.value, label: '' }));
+  const latest = q.data?.[q.data.length - 1];
+
+  return (
+    <>
+      <HeroNumber
+        value={latest ? (formatHero ? formatHero(latest.value) : formatNumber(latest.value)) : undefined}
+        unit={unit}
+        asOf={latest?.date}
+        isLoading={q.isLoading}
+        isError={q.isError}
+      />
+      <ChartCard
+        title={chartTitle}
+        isLoading={q.isLoading}
+        isError={q.isError}
+        empty={data.length === 0}
+      >
+        <LineChart
+          data={data}
+          width={CHART_WIDTH}
+          height={180}
+          hideDataPoints
+          curved
+          color={tone.color}
+          startFillColor={tone.color}
+          endFillColor={tone.color}
+          startOpacity={0.25}
+          endOpacity={0}
+          areaChart
+          thickness={2}
+          hideRules
+          yAxisColor="transparent"
+          xAxisColor={theme.border}
+          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          formatYLabel={(v: string) => formatCompact(Number(v))}
+          noOfSections={3}
+          initialSpacing={0}
+          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
+        />
+      </ChartCard>
+    </>
+  );
+}
+
+type GenericBarProps = DetailProps & {
+  datasetId: string;
+  valueField: string;
+  categoryField: string;
+  filterField?: string;
+  filterValue?: string;
+  excludeNames?: string[];
+  unit?: string;
+  formatHero?: (v: number) => string;
+  chartTitle: string;
+  maxBars?: number;
+  rotateLabel?: boolean;
+};
+
+export function GenericBarDetail({
+  tone,
+  datasetId,
+  valueField,
+  categoryField,
+  filterField,
+  filterValue,
+  excludeNames,
+  unit,
+  formatHero,
+  chartTitle,
+  maxBars = 16,
+  rotateLabel = true,
+}: GenericBarProps) {
+  const { theme } = useTheme();
+  const q = useCategoricalSnapshotQuery({
+    id: datasetId,
+    valueField,
+    categoryField,
+    filterField,
+    filterValue,
+    excludeNames,
+  });
+
+  const points = (q.data?.points ?? []).slice(0, maxBars);
+  const total = points.reduce((acc, p) => acc + p.value, 0);
+  const top = points[0];
+  const data = points.map((p) => ({
+    value: p.value,
+    label: shortLabel(p.name, 8),
+    frontColor: tone.color,
+  }));
+
+  return (
+    <>
+      <HeroNumber
+        value={top ? (formatHero ? formatHero(top.value) : formatNumber(top.value)) : undefined}
+        unit={top ? `${shortLabel(top.name, 16)} (top)` : unit}
+        delta={
+          q.data && points.length > 1
+            ? { sign: 0, label: `${points.length} entries · total ${formatCompact(total)}` }
+            : undefined
+        }
+        asOf={q.data?.asOf}
+        isLoading={q.isLoading}
+        isError={q.isError}
+      />
+      <ChartCard
+        title={chartTitle}
+        isLoading={q.isLoading}
+        isError={q.isError}
+        empty={data.length === 0}
+      >
+        <BarChart
+          data={data}
+          width={CHART_WIDTH}
+          height={260}
+          barWidth={Math.max(8, Math.min(20, (CHART_WIDTH - 40) / data.length - 8))}
+          spacing={Math.max(4, (CHART_WIDTH - 40) / data.length - 14)}
+          frontColor={tone.color}
+          yAxisColor="transparent"
+          xAxisColor={theme.border}
+          hideRules
+          formatYLabel={(v: string) => formatCompact(Number(v))}
+          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          rotateLabel={rotateLabel}
+          noOfSections={3}
+        />
+      </ChartCard>
+    </>
+  );
+}
+
+// ─────────────────────────── Currency (already built) ───────────────────────────
 
 export function CurrencyDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
@@ -153,9 +320,6 @@ export function CurrencyDetail({ tone }: DetailProps) {
   const history = useCurrencyHistoryQuery('usd', 30);
 
   const data = (history.data ?? []).map((p) => ({ value: p.rate, label: '' }));
-  const yMin = data.length ? Math.min(...data.map((p) => p.value)) : 0;
-  const yMax = data.length ? Math.max(...data.map((p) => p.value)) : 0;
-
   const delta = latest.data?.delta;
   const deltaLabel =
     delta != null
@@ -197,7 +361,6 @@ export function CurrencyDetail({ tone }: DetailProps) {
           yAxisColor="transparent"
           xAxisColor={theme.border}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          yAxisOffset={Math.max(0, yMin - (yMax - yMin) * 0.1)}
           noOfSections={3}
           initialSpacing={0}
           spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
@@ -207,7 +370,7 @@ export function CurrencyDetail({ tone }: DetailProps) {
   );
 }
 
-// ─────────────────────────── Fuel ───────────────────────────
+// ─────────────────────────── Fuel (already built) ───────────────────────────
 
 export function FuelDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
@@ -241,15 +404,11 @@ export function FuelDetail({ tone }: DetailProps) {
         <Card variant="outline" padding={S.lg} radius={R.xl} style={{ marginTop: S.md }}>
           <Stack direction="row" justify="space-between">
             <Stack gap={S.xxs}>
-              <Text variant="caption" tone="muted">
-                RON97
-              </Text>
+              <Text variant="caption" tone="muted">RON97</Text>
               <Text variant="h2">RM {latest.data.ron97?.toFixed(2) ?? '—'}</Text>
             </Stack>
             <Stack gap={S.xxs}>
-              <Text variant="caption" tone="muted">
-                Diesel
-              </Text>
+              <Text variant="caption" tone="muted">Diesel</Text>
               <Text variant="h2">RM {latest.data.diesel?.toFixed(2) ?? '—'}</Text>
             </Stack>
           </Stack>
@@ -303,7 +462,7 @@ export function RidershipDetail({ tone }: DetailProps) {
   const byService = (latest.data?.byService ?? []).slice(0, 10);
   const barData = byService.map((s) => ({
     value: s.value,
-    label: s.name,
+    label: shortLabel(s.name, 9),
     frontColor: tone.color,
   }));
 
@@ -324,7 +483,6 @@ export function RidershipDetail({ tone }: DetailProps) {
             : undefined
         }
       />
-
       <ChartCard
         title="Last 30 days · total rail"
         isLoading={history.isLoading}
@@ -354,7 +512,6 @@ export function RidershipDetail({ tone }: DetailProps) {
           spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(historyData.length - 1, 1))}
         />
       </ChartCard>
-
       <ChartCard
         title="By service · latest day"
         isLoading={latest.isLoading}
@@ -446,7 +603,6 @@ export function UnemploymentDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useUnemploymentLatestQuery();
   const history = useUnemploymentHistoryQuery(24);
-
   const data = (history.data ?? []).map((p) => ({ value: p.rate, label: '' }));
 
   return (
@@ -504,13 +660,11 @@ export function GdpDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useGdpLatestQuery();
   const history = useGdpHistoryQuery(12);
-
   const data = (history.data ?? []).map((p) => ({
     value: p.yoy,
     label: quarterLabel(p.date),
     frontColor: p.yoy >= 0 ? tone.color : theme.semantic.danger,
   }));
-
   return (
     <>
       <HeroNumber
@@ -564,14 +718,12 @@ function quarterLabel(date: string): string {
 export function PopulationDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const q = usePopulationLatestQuery();
-
   const byState = (q.data?.byState ?? []).slice(0, 16);
   const data = byState.map((s) => ({
     value: s.population,
-    label: s.state.length > 9 ? s.state.slice(0, 7) + '…' : s.state,
+    label: shortLabel(s.state, 9),
     frontColor: tone.color,
   }));
-
   return (
     <>
       <HeroNumber
@@ -582,10 +734,7 @@ export function PopulationDetail({ tone }: DetailProps) {
         isError={q.isError}
         delta={
           q.data
-            ? {
-                sign: 0,
-                label: `${q.data.byState.length} states + federal territories`,
-              }
+            ? { sign: 0, label: `${q.data.byState.length} states + federal territories` }
             : undefined
         }
       />
@@ -616,15 +765,179 @@ export function PopulationDetail({ tone }: DetailProps) {
   );
 }
 
+// ─────────────────────────── Household income ───────────────────────────
+
+export function HouseholdIncomeDetail({ tone }: DetailProps) {
+  const { theme } = useTheme();
+  const mean = useTimeSeriesQuery({ id: 'hh_income', valueField: 'income_mean', limit: 12 });
+  const median = useTimeSeriesQuery({ id: 'hh_income', valueField: 'income_median', limit: 12 });
+  const meanData = (mean.data ?? []).map((p) => ({ value: p.value, label: '' }));
+  const medianData = (median.data ?? []).map((p) => ({ value: p.value, label: '' }));
+  const latestMedian = median.data?.[median.data.length - 1];
+  return (
+    <>
+      <HeroNumber
+        value={latestMedian ? `RM ${formatNumber(latestMedian.value)}` : undefined}
+        unit="median / month"
+        asOf={latestMedian?.date}
+        isLoading={median.isLoading}
+        isError={median.isError}
+        delta={
+          mean.data?.[mean.data.length - 1]
+            ? { sign: 0, label: `Mean RM ${formatNumber(mean.data[mean.data.length - 1].value)}` }
+            : undefined
+        }
+      />
+      <ChartCard
+        title="Median + mean over time"
+        isLoading={mean.isLoading || median.isLoading}
+        isError={mean.isError || median.isError}
+        empty={meanData.length === 0}
+      >
+        <LineChart
+          data={medianData}
+          data2={meanData}
+          width={CHART_WIDTH}
+          height={200}
+          hideDataPoints
+          curved
+          color1={tone.color}
+          color2={theme.chart.coral}
+          thickness={2}
+          hideRules
+          yAxisColor="transparent"
+          xAxisColor={theme.border}
+          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          formatYLabel={(v: string) => formatCompact(Number(v))}
+          noOfSections={3}
+          initialSpacing={4}
+          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(medianData.length - 1, 1))}
+        />
+        <Stack direction="row" gap={S.md} style={{ paddingHorizontal: S.sm, marginTop: S.sm }}>
+          <LegendDot color={tone.color} label="Median" />
+          <LegendDot color={theme.chart.coral} label="Mean" />
+        </Stack>
+      </ChartCard>
+    </>
+  );
+}
+
+// ─────────────────────────── Productivity (sectoral) ───────────────────────────
+
+export function ProductivityDetail({ tone }: DetailProps) {
+  const { theme } = useTheme();
+  const q = useCategoricalSnapshotQuery({
+    id: 'productivity_qtr',
+    valueField: 'output_hour',
+    categoryField: 'sector',
+    filterField: 'series',
+    filterValue: 'abs',
+  });
+  const points = (q.data?.points ?? []).filter((p) => p.name !== 'p0').slice(0, 10);
+  const data = points.map((p) => ({
+    value: p.value,
+    label: p.name,
+    frontColor: tone.color,
+  }));
+  const overall = q.data?.points.find((p) => p.name === 'p0');
+  return (
+    <>
+      <HeroNumber
+        value={overall ? `RM ${overall.value.toFixed(1)}` : undefined}
+        unit="output / hour (overall)"
+        asOf={q.data ? quarterLabel(q.data.asOf) : undefined}
+        isLoading={q.isLoading}
+        isError={q.isError}
+      />
+      <ChartCard
+        title="By sector"
+        isLoading={q.isLoading}
+        isError={q.isError}
+        empty={data.length === 0}
+      >
+        <BarChart
+          data={data}
+          width={CHART_WIDTH}
+          height={220}
+          barWidth={16}
+          spacing={10}
+          frontColor={tone.color}
+          yAxisColor="transparent"
+          xAxisColor={theme.border}
+          hideRules
+          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          rotateLabel
+          noOfSections={3}
+        />
+      </ChartCard>
+    </>
+  );
+}
+
+// ─────────────────────────── EPF dividend ───────────────────────────
+
+export function EpfDividendDetail({ tone }: DetailProps) {
+  const { theme } = useTheme();
+  const conv = useTimeSeriesQuery({ id: 'epf_dividend', valueField: 'conventional', limit: 12 });
+  const shariah = useTimeSeriesQuery({ id: 'epf_dividend', valueField: 'shariah', limit: 12 });
+  const convData = (conv.data ?? []).map((p) => ({ value: p.value, label: '' }));
+  const shariahData = (shariah.data ?? []).map((p) => ({ value: p.value, label: '' }));
+  const latestConv = conv.data?.[conv.data.length - 1];
+  const latestShariah = shariah.data?.[shariah.data.length - 1];
+  return (
+    <>
+      <HeroNumber
+        value={latestConv ? `${latestConv.value.toFixed(2)}%` : undefined}
+        unit="conventional"
+        delta={
+          latestShariah
+            ? { sign: 0, label: `${latestShariah.value.toFixed(2)}% Shariah · ${new Date(latestShariah.date).getFullYear()}` }
+            : undefined
+        }
+        isLoading={conv.isLoading}
+        isError={conv.isError}
+      />
+      <ChartCard
+        title="Last 12 years"
+        isLoading={conv.isLoading}
+        isError={conv.isError}
+        empty={convData.length === 0}
+      >
+        <LineChart
+          data={convData}
+          data2={shariahData}
+          width={CHART_WIDTH}
+          height={200}
+          hideDataPoints
+          curved
+          color1={tone.color}
+          color2={theme.chart.teal}
+          thickness={2}
+          hideRules
+          yAxisColor="transparent"
+          xAxisColor={theme.border}
+          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          noOfSections={3}
+          initialSpacing={4}
+          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(convData.length - 1, 1))}
+        />
+        <Stack direction="row" gap={S.md} style={{ paddingHorizontal: S.sm, marginTop: S.sm }}>
+          <LegendDot color={tone.color} label="Conventional" />
+          <LegendDot color={theme.chart.teal} label="Shariah" />
+        </Stack>
+      </ChartCard>
+    </>
+  );
+}
+
 // ─────────────────────────── Bits ───────────────────────────
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <Stack direction="row" align="center" gap={S.xs}>
       <View style={{ width: 8, height: 8, borderRadius: R.pill, backgroundColor: color }} />
-      <Text variant="caption" tone="soft">
-        {label}
-      </Text>
+      <Text variant="caption" tone="soft">{label}</Text>
     </Stack>
   );
 }
