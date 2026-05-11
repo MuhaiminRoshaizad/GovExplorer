@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { FlatList, View } from 'react-native';
 
 import { Stack, Text } from '@/components/ui';
-import { useI18n } from '@/i18n';
 import { S } from '@/theme';
 import { useTheme } from '@/theme';
 
@@ -16,15 +15,13 @@ type Props = {
 
 export function CategorySection({ category }: Props) {
   const { theme } = useTheme();
-  const { t } = useI18n();
   const fg = TONE_COLOR[category.tone](theme);
   const bg = TONE_GLOW[category.tone](theme);
-  const label = t.insights[category.key];
   const Icon = category.Icon;
 
   return (
     <View style={{ marginTop: S.xxl }}>
-      <Stack direction="row" align="center" gap={S.sm} style={{ paddingHorizontal: 0 }}>
+      <Stack direction="row" align="center" gap={S.sm}>
         <View
           style={{
             width: 30,
@@ -38,7 +35,7 @@ export function CategorySection({ category }: Props) {
           <Icon size={16} color={fg} strokeWidth={2} />
         </View>
         <Text variant="h2" style={{ flex: 1 }}>
-          {label}
+          {category.label}
         </Text>
         <Text variant="caption" tone="muted">
           {category.datasets.length}
