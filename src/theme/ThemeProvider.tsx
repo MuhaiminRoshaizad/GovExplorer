@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SystemUI from 'expo-system-ui';
 
 import { darkTheme, lightTheme, type Mode, type Theme } from './theme';
 
@@ -36,6 +37,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const mode: Mode = preference === 'system' ? (system === 'dark' ? 'dark' : 'light') : preference;
   const theme = mode === 'dark' ? darkTheme : lightTheme;
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(theme.bg).catch(() => {});
+  }, [theme.bg]);
 
   const value = useMemo(() => ({ theme, mode, preference, setPreference }), [theme, mode, preference]);
 
