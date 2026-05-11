@@ -30,3 +30,12 @@ export {
 } from './unemployment';
 export { useGdpLatestQuery, useGdpHistoryQuery, type GdpLatest, type GdpPoint } from './gdp';
 export { usePopulationLatestQuery, type PopulationLatest } from './population';
+export {
+  useTimeSeriesQuery,
+  useMultiSeriesQuery,
+  useCategoricalSnapshotQuery,
+  useScalarLatestQuery,
+  type TimePoint,
+  type MultiSeriesPoint,
+  type CategoricalPoint,
+} from './generic';
