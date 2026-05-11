@@ -1,47 +1,76 @@
 export const en = {
-  app: {
-    name: 'GovExplorer',
-    tagline: 'Explore Malaysian open data',
-  },
   common: {
-    retry: 'Retry',
+    appName: 'GovExplorer',
     loading: 'Loading…',
-    empty: 'Nothing to show yet',
-    error: "Couldn't load",
-    noConnection: 'No connection',
-  },
-  greeting: {
-    morning: 'Good morning',
-    afternoon: 'Good afternoon',
-    evening: 'Good evening',
-  },
-  home: {
-    title: 'Explore Malaysia',
-    featured: 'Featured',
+    retry: 'Try again',
+    error: 'Something went wrong',
+    seeAll: 'See all',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    updated: 'Updated',
+    source: 'Source',
+    share: 'Share',
+    save: 'Save',
+    cancel: 'Cancel',
+    done: 'Done',
+    confirm: 'Confirm',
   },
   tabs: {
-    home: 'Home',
+    today: 'Today',
+    explore: 'Explore',
+    insights: 'Insights',
+    settings: 'Settings',
   },
-  cadence: {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    annual: 'Annual',
+  today: {
+    greetingMorning: 'Good morning',
+    greetingAfternoon: 'Good afternoon',
+    greetingEvening: 'Good evening',
+    pulseTitle: 'Malaysia today',
+    streakLabel: 'day streak',
+    surpriseTitle: 'Today’s surprise',
+    surpriseTap: 'Tap to reveal',
   },
-  fuel: {
-    title: 'Fuel prices',
-    subtitle: 'Weekly retail prices, Peninsular Malaysia',
-    weekOf: 'Week of {date}',
-    history: 'History',
-    high: 'High',
-    low: 'Low',
-    avg: 'Avg',
-    week: 'Week',
-    ron95: 'RON 95',
-    ron97: 'RON 97',
-    diesel: 'Diesel',
-    budi95: 'Budi95 subsidy: RM {value} / litre',
+  explore: {
+    title: 'Explore the map',
+    subtitle: 'Tap a state to see its story.',
   },
-};
+  insights: {
+    title: 'Insights',
+    subtitle: 'Beautifully crafted charts from open data.',
+    economy: 'Economy & finance',
+    transit: 'Transit & mobility',
+    climate: 'Climate & environment',
+    society: 'Population & society',
+  },
+  settings: {
+    title: 'Settings',
+    appearance: 'Appearance',
+    language: 'Language',
+    location: 'Location',
+    about: 'About',
+    themeSystem: 'Match system',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+  },
+  onboarding: {
+    skip: 'Skip',
+    next: 'Next',
+    start: 'Start exploring',
+    slide1Title: 'Malaysia, at a glance',
+    slide1Body: 'Open data made daily. Weather, ringgit, ridership, and more — all in one feed.',
+    slide2Title: 'Explore by map',
+    slide2Body: 'Tap any state to dive into its story — climate, economy, mobility, people.',
+    slide3Title: 'Beautiful insights',
+    slide3Body: 'Charts you’ll actually want to look at. Save the ones that matter.',
+  },
+} as const;
 
-export type Dictionary = typeof en;
+type Widen<T> = T extends string
+  ? string
+  : T extends readonly (infer U)[]
+    ? Widen<U>[]
+    : T extends object
+      ? { [K in keyof T]: Widen<T[K]> }
+      : T;
+
+export type Strings = Widen<typeof en>;
