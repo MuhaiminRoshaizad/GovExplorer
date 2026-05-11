@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack as RouterStack, router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowDownRight, ArrowUpRight, ChevronLeft, ExternalLink } from 'lucide-react-native';
 import { Dimensions, Linking, View } from 'react-native';
@@ -48,6 +48,7 @@ export default function DatasetDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
+      <RouterStack.Screen options={{ animation: 'slide_from_right' }} />
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <View style={{ paddingTop: insets.top, paddingHorizontal: S.lg, paddingBottom: S.sm }}>
         <Header title={dataset.agency} />
