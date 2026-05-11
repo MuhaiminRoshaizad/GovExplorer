@@ -25,6 +25,7 @@ export const en = {
     greetingMorning: 'Good morning',
     greetingAfternoon: 'Good afternoon',
     greetingEvening: 'Good evening',
+    brandLine: 'Malaysia, today.',
     pulseTitle: 'Malaysia today',
     streakLabel: 'day streak',
     surpriseTitle: 'Today’s surprise',

@@ -40,7 +40,7 @@ export function Greeting({ streak }: { streak: number }) {
             {greet}
           </Text>
           <Text variant="hero" style={{ marginTop: 2 }}>
-            Malaysia, today.
+            {t.today.brandLine}
           </Text>
         </View>
         {streak > 0 ? (

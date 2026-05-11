@@ -27,6 +27,7 @@ export const ms: Strings = {
     greetingMorning: 'Selamat pagi',
     greetingAfternoon: 'Selamat tengahari',
     greetingEvening: 'Selamat petang',
+    brandLine: 'Malaysia, hari ini.',
     pulseTitle: 'Malaysia hari ini',
     streakLabel: 'hari berturut',
     surpriseTitle: 'Kejutan hari ini',
