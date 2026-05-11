@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import {
+  Check,
   ChevronRight,
   Compass,
   Database,
@@ -15,31 +16,48 @@ import {
   TrendingUp,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
+import { useState } from 'react';
 import { Linking, View } from 'react-native';
 
 import { ScreenEnter } from '@/components/system/ScreenEnter';
-import { Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
+import { BottomSheet, Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
 import { useI18n, type Language } from '@/i18n';
 import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
+type ThemePref = 'system' | 'light' | 'dark';
+
 export default function AboutScreen() {
   const { t, language, setLanguage } = useI18n();
   const { theme, preference, setPreference } = useTheme();
+
+  const [themeSheetOpen, setThemeSheetOpen] = useState(false);
+  const [langSheetOpen, setLangSheetOpen] = useState(false);
+
+  const themeLabels: Record<ThemePref, string> = {
+    system: t.settings.themeSystem,
+    light: t.settings.themeLight,
+    dark: t.settings.themeDark,
+  };
+
+  const themeIcons: Record<ThemePref, LucideIcon> = {
+    system: SunMoon,
+    light: Sun,
+    dark: Moon,
+  };
+
+  const langLabels: Record<Language, string> = {
+    en: 'English',
+    ms: 'Bahasa Melayu',
+  };
 
   const features: Array<{ Icon: LucideIcon; label: string; tone: string }> = [
     { Icon: Sparkles, label: t.about.features.today, tone: theme.accent.base },
     { Icon: Compass, label: t.about.features.explore, tone: theme.chart.teal },
     { Icon: TrendingUp, label: t.about.features.insights, tone: theme.gold.base },
     { Icon: Sparkles, label: t.about.features.chat, tone: theme.accent.base },
-  ];
-
-  const themeOptions: Array<{ key: 'system' | 'light' | 'dark'; label: string; Icon: LucideIcon }> = [
-    { key: 'system', label: t.settings.themeSystem, Icon: SunMoon },
-    { key: 'light', label: t.settings.themeLight, Icon: Sun },
-    { key: 'dark', label: t.settings.themeDark, Icon: Moon },
   ];
 
   return (
@@ -88,75 +106,20 @@ export default function AboutScreen() {
         </Stack>
 
         <SectionLabel label={t.about.sections.preferences} />
-        <Card variant="flat" padding={S.xs} radius={R.xl}>
-          <Stack direction="row" gap={S.xs}>
-            {themeOptions.map((opt) => {
-              const selected = preference === opt.key;
-              return (
-                <Tap
-                  key={opt.key}
-                  haptic="selection"
-                  onPress={() => setPreference(opt.key)}
-                  style={{ flex: 1 }}
-                >
-                  <View
-                    style={{
-                      paddingVertical: S.md,
-                      paddingHorizontal: S.sm,
-                      borderRadius: R.lg,
-                      backgroundColor: selected ? theme.brand.glow : 'transparent',
-                      alignItems: 'center',
-                      gap: S.xs,
-                    }}
-                  >
-                    <opt.Icon
-                      size={18}
-                      color={selected ? theme.brand.base : theme.textSoft}
-                      strokeWidth={selected ? 2.2 : 1.8}
-                    />
-                    <Text
-                      variant="caption"
-                      style={{ color: selected ? theme.brand.base : theme.textSoft }}
-                    >
-                      {opt.label}
-                    </Text>
-                  </View>
-                </Tap>
-              );
-            })}
-          </Stack>
-        </Card>
-
-        <Card variant="flat" padding={S.xs} radius={R.xl} style={{ marginTop: S.sm }}>
-          <Stack direction="row" gap={S.xs}>
-            {(['en', 'ms'] as Language[]).map((lang) => {
-              const selected = language === lang;
-              return (
-                <Tap
-                  key={lang}
-                  haptic="selection"
-                  onPress={() => setLanguage(lang)}
-                  style={{ flex: 1 }}
-                >
-                  <View
-                    style={{
-                      paddingVertical: S.md,
-                      borderRadius: R.lg,
-                      backgroundColor: selected ? theme.brand.glow : 'transparent',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text
-                      variant="bodyBold"
-                      style={{ color: selected ? theme.brand.base : theme.textSoft }}
-                    >
-                      {lang === 'en' ? 'English' : 'Bahasa Melayu'}
-                    </Text>
-                  </View>
-                </Tap>
-              );
-            })}
-          </Stack>
+        <Card variant="flat" padding={0} radius={R.xl}>
+          <SettingRow
+            Icon={themeIcons[preference as ThemePref] ?? SunMoon}
+            label={t.settings.appearance}
+            value={themeLabels[preference as ThemePref]}
+            onPress={() => setThemeSheetOpen(true)}
+          />
+          <Divider />
+          <SettingRow
+            Icon={Globe}
+            label={t.settings.language}
+            value={langLabels[language]}
+            onPress={() => setLangSheetOpen(true)}
+          />
         </Card>
 
         <SectionLabel label={t.about.sections.info} />
@@ -165,7 +128,12 @@ export default function AboutScreen() {
           <Divider />
           <InfoRow Icon={Lock} label={t.about.rows.privacy} value={t.about.rows.privacyValue} />
           <Divider />
-          <LinkRow Icon={Globe} label={t.about.rows.source} value={t.about.rows.sourceValue} href="https://github.com/MuhaiminRoshaizad/GovExplorer" />
+          <LinkRow
+            Icon={Globe}
+            label={t.about.rows.source}
+            value={t.about.rows.sourceValue}
+            href="https://github.com/MuhaiminRoshaizad/GovExplorer"
+          />
         </Card>
 
         <SectionLabel label={t.about.sections.legal} />
@@ -183,6 +151,43 @@ export default function AboutScreen() {
           {t.about.madeBy}
         </Text>
       </ScreenEnter>
+
+      <BottomSheet
+        visible={themeSheetOpen}
+        onClose={() => setThemeSheetOpen(false)}
+        title={t.settings.appearance}
+      >
+        {(['system', 'light', 'dark'] as ThemePref[]).map((key) => (
+          <OptionRow
+            key={key}
+            Icon={themeIcons[key]}
+            label={themeLabels[key]}
+            selected={preference === key}
+            onPress={() => {
+              setPreference(key);
+              setThemeSheetOpen(false);
+            }}
+          />
+        ))}
+      </BottomSheet>
+
+      <BottomSheet
+        visible={langSheetOpen}
+        onClose={() => setLangSheetOpen(false)}
+        title={t.settings.language}
+      >
+        {(['en', 'ms'] as Language[]).map((key) => (
+          <OptionRow
+            key={key}
+            label={langLabels[key]}
+            selected={language === key}
+            onPress={() => {
+              setLanguage(key);
+              setLangSheetOpen(false);
+            }}
+          />
+        ))}
+      </BottomSheet>
     </ScreenScroll>
   );
 }
@@ -195,15 +200,7 @@ function SectionLabel({ label }: { label: string }) {
   );
 }
 
-function FeatureRow({
-  Icon,
-  label,
-  tone,
-}: {
-  Icon: LucideIcon;
-  label: string;
-  tone: string;
-}) {
+function FeatureRow({ Icon, label, tone }: { Icon: LucideIcon; label: string; tone: string }) {
   return (
     <Stack direction="row" align="center" gap={S.md}>
       <Icon size={20} color={tone} strokeWidth={1.8} />
@@ -211,6 +208,87 @@ function FeatureRow({
         {label}
       </Text>
     </Stack>
+  );
+}
+
+function SettingRow({
+  Icon,
+  label,
+  value,
+  onPress,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  value: string;
+  onPress: () => void;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Tap haptic="light" onPress={onPress}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: S.md,
+          paddingHorizontal: S.lg,
+          paddingVertical: S.md,
+        }}
+      >
+        <Icon size={18} color={theme.textSoft} strokeWidth={1.8} />
+        <Text variant="body" style={{ flex: 1 }}>
+          {label}
+        </Text>
+        <Text variant="body" tone="muted">
+          {value}
+        </Text>
+        <ChevronRight size={16} color={theme.textMuted} strokeWidth={1.6} />
+      </View>
+    </Tap>
+  );
+}
+
+function OptionRow({
+  Icon,
+  label,
+  selected,
+  onPress,
+}: {
+  Icon?: LucideIcon;
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Tap haptic="selection" onPress={onPress}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: S.md,
+          paddingHorizontal: S.lg,
+          paddingVertical: S.md,
+          backgroundColor: selected ? theme.brand.glow : 'transparent',
+        }}
+      >
+        {Icon ? (
+          <Icon
+            size={18}
+            color={selected ? theme.brand.base : theme.textSoft}
+            strokeWidth={selected ? 2.2 : 1.8}
+          />
+        ) : (
+          <View style={{ width: 18 }} />
+        )}
+        <Text
+          variant={selected ? 'bodyBold' : 'body'}
+          style={{ flex: 1, color: selected ? theme.brand.base : theme.text }}
+        >
+          {label}
+        </Text>
+        {selected ? <Check size={18} color={theme.brand.base} strokeWidth={2.4} /> : null}
+      </View>
+    </Tap>
   );
 }
 
