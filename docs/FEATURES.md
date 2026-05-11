@@ -6,7 +6,7 @@ Screen-by-screen breakdown of what ships in v1.
 
 ## Onboarding (first run)
 
-3-slide animated walkthrough, modal-presented over the tab navigator.
+3-slide animated walkthrough, presented as a card-slide-up modal over the tab navigator.
 
 | Slide | Hook |
 |---|---|
@@ -14,7 +14,9 @@ Screen-by-screen breakdown of what ships in v1.
 | 2 — *Explore by map* | Frames the map tab |
 | 3 — *Beautiful insights* | Frames the insights tab |
 
-Skip button always available. On completion, persists `onboarded: true` and routes to `(tabs)`.
+Skip button always available. On completion, persists `onboarded: true` and routes to `(tabs)`. Status bar style switches with theme inside the modal.
+
+> Gating (route to `/onboarding` on first launch if not onboarded) isn't wired in v1.0 — defer until ship. Currently the modal is reachable manually for testing.
 
 ---
 
@@ -26,13 +28,13 @@ The home tab. The goal: a person opens the app each morning and feels like Malay
 
 | Block | Component | Notes |
 |---|---|---|
-| Greeting + streak chip | `Greeting` | Time-of-day aware. Streak chip only shows for streaks ≥ 2. |
+| Greeting + streak chip | `Greeting` | Time-of-day aware. Streak chip only shows for streaks ≥ 2. Brand line `Malaysia, today.` is bilingual. |
 | Pulse hero | `PulseHero` | One marquee stat with a live indicator dot pulsing on the UI thread. |
-| 2×2 stat tiles | `StatTile` | Currency, transit, weather, unemployment. Staggered entrance. |
+| 2×2 stat tiles | `StatTile` | Currency, transit, weather, unemployment. Staggered entrance via Reanimated worklets. |
 | Surprise reveal | `SurpriseCard` | Tap to reveal a "did you know" fact. Spring rotation animation. |
 
-**Light gamification:**
-- Daily-open streak persisted in `AsyncStorage` (`StorageKeys.streak*`).
+**Light gamification (planned):**
+- Daily-open streak persisted in `AsyncStorage` (`StorageKeys.streak*`). Logic for incrementing isn't wired in v1.0.
 - Streak chip uses gold tokens, never red — encouragement, not anxiety.
 
 ---
@@ -41,7 +43,9 @@ The home tab. The goal: a person opens the app each morning and feels like Malay
 
 Map-first tab.
 
-**v1 placeholder:** Coming-soon card with a compass icon and feature description. **v1.1** ships:
+**v1 placeholder:** Coming-soon card with a compass icon, description, and feature badges. Uses `ScreenEnter` for fade-up entrance.
+
+**v1.2 ships:**
 - SVG topology of Malaysia (13 states + 3 federal territories)
 - Tap-to-zoom with Reanimated transitions
 - Per-state drawer with curated stats
@@ -62,7 +66,9 @@ Category list → chart screen pattern.
 | Climate & environment | Weather, rainfall, AQI, water levels |
 | Population & society | Population by state, births/deaths, unemployment, household income |
 
-Each chart screen ships with:
+**v1.0 placeholder:** Four category cards in a list, animated in via `ScreenEnter`.
+
+**v1.1 ships:** Each chart screen will include:
 - Hero number with delta
 - Primary visualisation (`react-native-gifted-charts` or bespoke `react-native-svg`)
 - "Beautiful card" share affordance — render to PNG and share-sheet out
@@ -70,18 +76,40 @@ Each chart screen ships with:
 
 ---
 
-## Settings
+## AI Chat (placeholder, v2)
 
-Minimal:
-- Appearance (`system` / `light` / `dark`)
-- Language (`English` / `Bahasa Melayu`)
-- Location (city — used for weather; defaults to Kuala Lumpur)
-- About (data source, app version)
+Tapping the center **Sparkles FAB** on the floating tab bar pushes `/chat` as a card slide-up modal. The placeholder includes:
 
-No account, no sync, no notifications in v1.
+- Header with title + close button
+- Pulsing accent-color Sparkles avatar with halo animation
+- "Coming soon" badge
+- Description copy (bilingual)
+- 3 sample question chips with staggered fade-in
+- Disabled input bar at the bottom (visual placeholder for the future composer)
+
+When v2 wires the LLM, only `app/chat.tsx` internals change — the route, modal presentation, FAB, and i18n strings stay.
+
+---
+
+## About (Settings tab, repurposed)
+
+A SelawatHub-inspired About page that combines app identity with preferences. Tab label is "About" / "Mengenai" (the route file stays `settings.tsx` for stability).
+
+**Composition (top to bottom):**
+
+1. **Hero** — centered Compass logo in a brand-glow tile, "GovExplorer" + version, tagline, description (bilingual)
+2. **Feature list** — 4 rows (Daily pulse, Interactive map, Editorial insights, AI assistant) with tone-tinted icons
+3. **Preferences section** — two **rows with trailing value** that open `BottomSheet` pickers:
+   - Appearance → System / Light / Dark
+   - Language → English / Bahasa Melayu
+4. **About section** — Data source, Privacy, Source code (link to GitHub)
+5. **Legal section** — Terms of use, Privacy policy (placeholder rows)
+6. **Footer** — "Made with care for Malaysia."
+
+The bottom-sheet pattern (row → tap → sheet with options) mirrors SelawatHub's language picker and is more compact than inline chips.
 
 ---
 
 ## Saved (deferred from v1)
 
-Long-press an insight card to save it locally. Saved items live in a screen accessed from a Settings entry. Not a tab. Considered v1.2.
+Long-press an insight card to save it locally. Saved items live in a screen accessed from a Settings entry. Not a tab. Considered v1.3.

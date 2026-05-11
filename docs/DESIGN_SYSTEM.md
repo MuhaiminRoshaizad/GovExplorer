@@ -30,9 +30,9 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 
 | Token | Hex | Usage |
 |---|---|---|
-| `accent.base` | `#E63946` | Highlight, accent fills, "surprise" reveal |
+| `accent.base` | `#E63946` | Highlight, accent fills, "surprise" reveal, **AI chat FAB** |
 | `accent.soft` | `#F4A6AB` | Soft fills |
-| `accent.glow` | `rgba(230,57,70,0.16)` | Translucent accent backgrounds |
+| `accent.glow` | `rgba(230,57,70,0.16)` | Translucent accent backgrounds, FAB halo |
 
 ### Gold (warmth, streaks, premium)
 
@@ -58,7 +58,7 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 | Token | Hex | Usage |
 |---|---|---|
 | `bg` | `#FAFAF7` | Page background (warm paper) |
-| `surface` | `#FFFFFF` | Cards |
+| `surface` | `#FFFFFF` | Cards, tab bar at rest |
 | `surfaceMuted` | `#F2EFE8` | Subtle fills, sections |
 | `surfaceSunken` | `#EDE9E0` | Inset elements |
 | `border` | `#E5E1D6` | Default border |
@@ -69,7 +69,7 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 | Token | Hex | Usage |
 |---|---|---|
 | `bg` | `#0A0D13` | Page background |
-| `surface` | `#141821` | Cards |
+| `surface` | `#141821` | Cards, tab bar at rest |
 | `surfaceMuted` | `#1B202B` | Subtle fills |
 | `surfaceSunken` | `#080B11` | Inset elements |
 | `border` | `#252B37` | Default border |
@@ -87,23 +87,25 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 
 ## Typography
 
-**Family:** Plus Jakarta Sans (weights 300, 400, 500, 600, 700, 800)
+**Family:** Inter (weights 300, 400, 500, 600, 700, 800) — loaded via `@expo-google-fonts/inter`.
 **File:** `src/theme/typography.ts` — variants keyed via `<Text variant="...">`.
+
+Inter is the de-facto modern app font — used by Figma, Linear, Vercel, Stripe Press. Geometric, professional, neutral, excellent at all sizes, has tabular figures.
 
 | Variant | Size / LH | Weight | Tracking | Usage |
 |---|---|---|---|---|
-| `display` | 44 / 48 | 300 | -1.2 | Onboarding titles, hero numbers |
-| `numeric` | 36 / 40 | 300 | -0.8 | Big stat values |
-| `hero` | 32 / 38 | 700 | -0.8 | Screen titles |
-| `h1` | 24 / 30 | 700 | -0.4 | Section titles |
-| `h2` | 19 / 24 | 600 | -0.2 | Card titles |
-| `h3` | 16 / 22 | 600 | 0 | List item titles |
+| `display` | 44 / 50 | 300 | -0.8 | Onboarding titles, hero numbers |
+| `numeric` | 36 / 42 | 300 | -0.6 | Big stat values |
+| `hero` | 30 / 36 | 700 | -0.6 | Screen titles |
+| `h1` | 22 / 28 | 700 | -0.3 | Section titles |
+| `h2` | 18 / 24 | 600 | -0.2 | Card titles |
+| `h3` | 16 / 22 | 600 | -0.1 | List item titles |
 | `bodyLg` | 16 / 24 | 400 | 0 | Lead paragraph |
 | `body` | 14 / 20 | 400 | 0 | Body |
 | `bodyMedium` | 14 / 20 | 500 | 0 | Body (slightly weighted) |
 | `bodyBold` | 14 / 20 | 600 | 0 | Inline emphasis |
 | `caption` | 12 / 16 | 500 | 0 | Captions, meta |
-| `micro` | 10 / 12 | 700 | 1.4 | Uppercase eyebrows, badges |
+| `micro` | 10 / 12 | 600 | 1.2 | Uppercase eyebrows, badges |
 
 **Numerics:** Always use `numeric` (light, large) for hero stats. Tabular alignment in lists.
 
@@ -142,6 +144,16 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 
 ---
 
+## Layout tokens
+
+**Exported from** `tokens.ts`.
+
+| Token | Value | Use |
+|---|---|---|
+| `TAB_BAR_CLEARANCE` | `110` | Bottom padding reserved by `Screen` / `ScreenScroll` so the floating tab bar doesn't cover content. Sum of bar paddingTop (30) + BAR_HEIGHT (64) + paddingBottom (8) + slack. |
+
+---
+
 ## Motion
 
 **Exported as** `Motion`.
@@ -161,10 +173,18 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 | `bouncy` | Surprise reveals, playful |
 
 **Rules:**
-- Motion supports meaning. Pulses signal "live." Stagger signals "this is fresh."
+- Motion supports meaning. Pulses signal "live." Stagger signals "this is fresh." Bar blur signals "more content below."
 - No animation longer than `storyteller`. If it feels long, it is.
 - All animations driven through Reanimated worklets — never `Animated` API.
 - Respect `AccessibilityInfo.reduceMotionEnabled` in v2.
+
+### Scroll-aware chrome
+
+The `TabBar` reads from `ScrollContext` and interpolates its tint overlay opacity between `1` (opaque) at `scrollY=0` and `0.55` (frosted) at `scrollY≥40`. This is the YouTube / Telegram pattern — bar is solid at rest, becomes a frosted-glass overlay as content scrolls under it. On screen focus change, `ScreenScroll` resets scrollY to 0 so each fresh tab starts with the bar opaque.
+
+### Theme & language switches
+
+Theme and language changes snap. This is the React Native standard practice (Linear, Spotify, Apple Music). RN has no equivalent of Flutter's `themeAnimationDuration` — implementing one requires animating every color via `interpolateColor`, a global refactor not worth the polish gain. An earlier "crossfade overlay" experiment was removed because it felt like a curtain rather than a smooth transition.
 
 ---
 
@@ -177,6 +197,12 @@ Influences: Apple's Health app, The Pudding, Bloomberg Beta, gov.uk, Singapore's
 | `Tap` | `src/components/ui/Tap.tsx` | Pressable with spring scale + haptic. Use for every interactive surface. |
 | `Stack` | `src/components/ui/Stack.tsx` | Flex layout helper. |
 | `Badge` | `src/components/ui/Badge.tsx` | Pill labels. Toned. |
-| `Screen` / `ScreenScroll` | `src/components/ui/Screen.tsx` | Safe-area + bg-color screen frame. |
+| `Screen` / `ScreenScroll` | `src/components/ui/Screen.tsx` | Safe-area + bg-color + tab-bar-clearance screen frame. `ScreenScroll` writes scroll position to `ScrollContext`. |
+| `BottomSheet` | `src/components/ui/BottomSheet.tsx` | Modal-backed bottom sheet with backdrop fade and spring slide-up. Used for preference pickers in About. |
+| `ScreenEnter` | `src/components/system/ScreenEnter.tsx` | First-mount entrance helper. Variants `fade`, `fadeUp`. |
+| `TabBar` | `src/components/nav/TabBar.tsx` | Floating blurred bottom tab bar with center AI FAB. |
+| `ScrollProvider` / `useScrollY` | `src/components/system/ScrollContext.tsx` | Shared scroll position for chrome animations. |
 
 **Convention:** Never use raw `<TouchableOpacity>` or `<Pressable>` for primary interactions — they don't give haptics or scale. Use `Tap`.
+
+**Convention:** Use `ScreenScroll` (not raw `ScrollView`) for scrollable tab content — it handles safe-area, tab-bar clearance, status-bar style, and the scroll-position wiring automatically.
