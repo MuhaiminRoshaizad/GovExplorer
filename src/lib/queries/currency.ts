@@ -2,14 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import { apiGet, Endpoints } from '@/lib/api';
 
-type CurrencyRow = {
+type Code = 'usd' | 'sgd' | 'eur' | 'gbp' | 'jpy' | 'cny' | 'aud';
+
+type DailyRow = {
   date: string;
-  currency_code?: string;
-  currency?: string;
-  rate?: number;
-  buying_rate?: number;
-  selling_rate?: number;
-};
+  rate_type: 'buying' | 'middle' | 'selling';
+} & Partial<Record<Code, number | null>>;
 
 export type CurrencyLatest = {
   pair: string;
@@ -23,43 +21,30 @@ export type CurrencyPoint = { date: string; rate: number };
 
 const HOUR = 60 * 60 * 1000;
 
-function pickRate(row: CurrencyRow): number | null {
-  if (typeof row.rate === 'number') return row.rate;
-  if (typeof row.buying_rate === 'number' && typeof row.selling_rate === 'number') {
-    return (row.buying_rate + row.selling_rate) / 2;
-  }
-  if (typeof row.buying_rate === 'number') return row.buying_rate;
-  if (typeof row.selling_rate === 'number') return row.selling_rate;
-  return null;
+function pickRate(row: DailyRow, code: Code): number | null {
+  const v = row[code];
+  return typeof v === 'number' ? v : null;
 }
 
-function matchesCode(row: CurrencyRow, code: string): boolean {
-  const lower = code.toLowerCase();
-  return (
-    row.currency_code?.toLowerCase() === lower ||
-    row.currency?.toLowerCase() === lower
-  );
-}
-
-export function useCurrencyLatestQuery(code: 'usd' | 'sgd' | 'eur' | 'gbp' = 'usd') {
+export function useCurrencyLatestQuery(code: Code = 'usd') {
   return useQuery({
-    queryKey: ['currency', 'latest', code],
+    queryKey: ['exchangerates_daily_1700', 'latest', code],
     queryFn: ({ signal }) =>
-      apiGet<CurrencyRow[]>(
+      apiGet<DailyRow[]>(
         Endpoints.catalogue,
-        { id: 'currency', limit: 200, sort: '-date' },
+        { id: 'exchangerates_daily_1700', limit: 9, sort: '-date' },
         signal
       ),
     select: (rows): CurrencyLatest | null => {
-      const matches = rows.filter((r) => matchesCode(r, code));
-      const latest = matches[0];
-      const previous = matches[1];
+      const middle = rows.filter((r) => r.rate_type === 'middle');
+      const latest = middle[0];
+      const previous = middle[1];
       if (!latest) return null;
-      const rate = pickRate(latest);
+      const rate = pickRate(latest, code);
       if (rate === null) return null;
-      const prevRate = previous ? pickRate(previous) : null;
+      const prevRate = previous ? pickRate(previous, code) : null;
       return {
-        pair: `MYR/${code.toUpperCase()}`,
+        pair: `${code.toUpperCase()} / MYR`,
         rate,
         previousRate: prevRate,
         delta: prevRate !== null ? rate - prevRate : null,
@@ -70,21 +55,21 @@ export function useCurrencyLatestQuery(code: 'usd' | 'sgd' | 'eur' | 'gbp' = 'us
   });
 }
 
-export function useCurrencyHistoryQuery(code: 'usd' | 'sgd' | 'eur' | 'gbp' = 'usd', days = 30) {
+export function useCurrencyHistoryQuery(code: Code = 'usd', days = 30) {
   return useQuery({
-    queryKey: ['currency', 'history', code, days],
+    queryKey: ['exchangerates_daily_1700', 'history', code, days],
     queryFn: ({ signal }) =>
-      apiGet<CurrencyRow[]>(
+      apiGet<DailyRow[]>(
         Endpoints.catalogue,
-        { id: 'currency', limit: 1500, sort: '-date' },
+        { id: 'exchangerates_daily_1700', limit: days * 3 + 6, sort: '-date' },
         signal
       ),
     select: (rows): CurrencyPoint[] => {
       const points = rows
-        .filter((r) => matchesCode(r, code))
-        .map((r) => ({ date: r.date, rate: pickRate(r) }))
-        .filter((p): p is CurrencyPoint => p.rate !== null)
+        .filter((r) => r.rate_type === 'middle')
         .slice(0, days)
+        .map((r) => ({ date: r.date, rate: pickRate(r, code) }))
+        .filter((p): p is CurrencyPoint => p.rate !== null)
         .reverse();
       return points;
     },

@@ -2,35 +2,81 @@ import { useQuery } from '@tanstack/react-query';
 
 import { apiGet, Endpoints } from '@/lib/api';
 
-type InflationRow = {
+type CpiRow = {
   date: string;
-  overall?: number;
-  inflation_yoy?: number;
-  inflation_mom?: number;
+  division: string;
+  index: number;
 };
 
 export type InflationLatest = {
   yoy: number;
+  mom: number | null;
+  index: number;
   asOf: string;
 };
 
+export type InflationPoint = { date: string; yoy: number };
+
 const SIX_HOURS = 6 * 60 * 60 * 1000;
+
+function monthsAgoKey(d: string, months: number): string {
+  const dt = new Date(d);
+  dt.setMonth(dt.getMonth() - months);
+  return dt.toISOString().slice(0, 10);
+}
 
 export function useInflationLatestQuery() {
   return useQuery({
-    queryKey: ['inflation', 'latest'],
+    queryKey: ['cpi_headline', 'latest'],
     queryFn: ({ signal }) =>
-      apiGet<InflationRow[]>(
+      apiGet<CpiRow[]>(
         Endpoints.catalogue,
-        { id: 'cpi_headline', limit: 1, sort: '-date' },
+        { id: 'cpi_headline', limit: 200, sort: '-date' },
         signal
       ),
     select: (rows): InflationLatest | null => {
-      const latest = rows[0];
+      const overall = rows.filter((r) => r.division === 'overall');
+      const latest = overall[0];
       if (!latest) return null;
-      const yoy = latest.inflation_yoy ?? latest.overall ?? null;
-      if (yoy === null) return null;
-      return { yoy, asOf: latest.date };
+      const targetYoy = monthsAgoKey(latest.date, 12);
+      const yearAgo = overall.find((r) => r.date === targetYoy);
+      const monthAgo = overall[1];
+      const yoy = yearAgo ? ((latest.index - yearAgo.index) / yearAgo.index) * 100 : 0;
+      const mom = monthAgo ? ((latest.index - monthAgo.index) / monthAgo.index) * 100 : null;
+      return {
+        yoy,
+        mom,
+        index: latest.index,
+        asOf: latest.date,
+      };
+    },
+    staleTime: SIX_HOURS,
+  });
+}
+
+export function useInflationHistoryQuery(months = 24) {
+  return useQuery({
+    queryKey: ['cpi_headline', 'history', months],
+    queryFn: ({ signal }) =>
+      apiGet<CpiRow[]>(
+        Endpoints.catalogue,
+        { id: 'cpi_headline', limit: 600, sort: '-date' },
+        signal
+      ),
+    select: (rows): InflationPoint[] => {
+      const overall = rows.filter((r) => r.division === 'overall').reverse();
+      const points: InflationPoint[] = [];
+      for (let i = 12; i < overall.length; i++) {
+        const cur = overall[i];
+        const prior = overall[i - 12];
+        if (prior.index > 0) {
+          points.push({
+            date: cur.date,
+            yoy: ((cur.index - prior.index) / prior.index) * 100,
+          });
+        }
+      }
+      return points.slice(-months);
     },
     staleTime: SIX_HOURS,
   });
