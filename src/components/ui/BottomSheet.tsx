@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -15,15 +15,23 @@ import { useTheme } from '@/theme';
 import { Text } from './Text';
 
 const HIDDEN = 800;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  maxHeightRatio?: number;
 };
 
-export function BottomSheet({ visible, onClose, children, title }: Props) {
+export function BottomSheet({
+  visible,
+  onClose,
+  children,
+  title,
+  maxHeightRatio = 0.85,
+}: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
@@ -58,6 +66,8 @@ export function BottomSheet({ visible, onClose, children, title }: Props) {
 
   if (!mounted) return null;
 
+  const maxSheetHeight = SCREEN_HEIGHT * maxHeightRatio;
+
   return (
     <Modal
       transparent
@@ -79,10 +89,10 @@ export function BottomSheet({ visible, onClose, children, title }: Props) {
             left: 0,
             right: 0,
             bottom: 0,
+            maxHeight: maxSheetHeight,
             backgroundColor: theme.surface,
             borderTopLeftRadius: R.xxl,
             borderTopRightRadius: R.xxl,
-            paddingBottom: insets.bottom + S.md,
             paddingTop: S.sm,
           },
           sheetStyle,
@@ -103,7 +113,12 @@ export function BottomSheet({ visible, onClose, children, title }: Props) {
             {title}
           </Text>
         ) : null}
-        {children}
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + S.md }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
       </Animated.View>
     </Modal>
   );

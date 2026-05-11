@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe,
   Lock,
+  MapPin,
   Moon,
   ScrollText,
   Shield,
@@ -16,12 +17,14 @@ import {
   TrendingUp,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, View } from 'react-native';
 
 import { ScreenEnter } from '@/components/system/ScreenEnter';
 import { BottomSheet, Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
+import { DEFAULT_STATE_CODE, STATES, findState, type StateCode } from '@/data/states';
 import { useI18n, type Language } from '@/i18n';
+import { storage, StorageKeys } from '@/lib/storage';
 import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
@@ -35,6 +38,22 @@ export default function AboutScreen() {
 
   const [themeSheetOpen, setThemeSheetOpen] = useState(false);
   const [langSheetOpen, setLangSheetOpen] = useState(false);
+  const [stateSheetOpen, setStateSheetOpen] = useState(false);
+  const [stateCode, setStateCode] = useState<StateCode>(DEFAULT_STATE_CODE);
+
+  useEffect(() => {
+    storage.getJSON<StateCode>(StorageKeys.homeLocation).then((stored) => {
+      if (stored) setStateCode(stored);
+    });
+  }, []);
+
+  const selectState = (code: StateCode) => {
+    setStateCode(code);
+    storage.setJSON(StorageKeys.homeLocation, code);
+    setStateSheetOpen(false);
+  };
+
+  const currentStateName = findState(stateCode)?.name ?? 'Kuala Lumpur';
 
   const themeLabels: Record<ThemePref, string> = {
     system: t.settings.themeSystem,
@@ -120,6 +139,13 @@ export default function AboutScreen() {
             value={langLabels[language]}
             onPress={() => setLangSheetOpen(true)}
           />
+          <Divider />
+          <SettingRow
+            Icon={MapPin}
+            label={t.settings.location}
+            value={currentStateName}
+            onPress={() => setStateSheetOpen(true)}
+          />
         </Card>
 
         <SectionLabel label={t.about.sections.info} />
@@ -185,6 +211,21 @@ export default function AboutScreen() {
               setLanguage(key);
               setLangSheetOpen(false);
             }}
+          />
+        ))}
+      </BottomSheet>
+
+      <BottomSheet
+        visible={stateSheetOpen}
+        onClose={() => setStateSheetOpen(false)}
+        title={t.settings.location}
+      >
+        {STATES.map((s) => (
+          <OptionRow
+            key={s.code}
+            label={s.name}
+            selected={stateCode === s.code}
+            onPress={() => selectState(s.code)}
           />
         ))}
       </BottomSheet>

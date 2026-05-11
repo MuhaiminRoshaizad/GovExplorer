@@ -47,7 +47,7 @@ export const en = {
     title: 'About',
     appearance: 'Appearance',
     language: 'Language',
-    location: 'Location',
+    location: 'Home state',
     about: 'About',
     themeSystem: 'Match system',
     themeLight: 'Light',

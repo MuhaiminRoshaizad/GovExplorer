@@ -49,7 +49,7 @@ export const ms: Strings = {
     title: 'Mengenai',
     appearance: 'Penampilan',
     language: 'Bahasa',
-    location: 'Lokasi',
+    location: 'Negeri utama',
     about: 'Mengenai',
     themeSystem: 'Ikut sistem',
     themeLight: 'Terang',
