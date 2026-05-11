@@ -13,6 +13,8 @@ import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -22,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useScrollY } from '@/components/system/ScrollContext';
 import { useI18n } from '@/i18n';
 import { Motion, R, S } from '@/theme';
 import { useTheme } from '@/theme';
@@ -74,8 +77,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   const tint = mode === 'dark' ? 'dark' : 'light';
-  const tintOverlay =
-    mode === 'dark' ? 'rgba(20,24,33,0.55)' : 'rgba(255,255,255,0.55)';
+  const scrollY = useScrollY();
+
+  const tintStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 40], [1, 0.55], Extrapolation.CLAMP),
+  }));
 
   return (
     <View
@@ -106,17 +112,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             },
             android: {
               elevation: 12,
-              backgroundColor: tintOverlay,
+              backgroundColor: theme.surface,
             },
             default: {},
           }),
         ]}
       >
         <BlurView intensity={70} tint={tint} style={StyleSheet.absoluteFillObject} />
-        <View
+        <Animated.View
           style={[
             StyleSheet.absoluteFillObject,
-            { backgroundColor: tintOverlay },
+            { backgroundColor: theme.surface },
+            tintStyle,
           ]}
         />
         <View
