@@ -8,7 +8,7 @@ import { PulseHero } from '@/features/today/PulseHero';
 import { StatTile } from '@/features/today/StatTile';
 import { SurpriseCard } from '@/features/today/SurpriseCard';
 import { WeekTrends } from '@/features/today/WeekTrends';
-import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
+import { formatCompact, formatDate, formatNumber, formatPercent } from '@/lib/format';
 import {
   useCurrencyLatestQuery,
   useFuelPriceLatestQuery,
@@ -32,7 +32,7 @@ export default function Today() {
           valueLabel={fx.data ? fx.data.rate.toFixed(4) : '—'}
           deltaLabel={
             fx.data
-              ? `1 USD → MYR · as of ${fx.data.asOf}`
+              ? `1 USD → MYR · ${formatDate(fx.data.asOf)}`
               : fx.isLoading
                 ? 'Loading exchange rate…'
                 : 'Exchange rate unavailable'
@@ -90,7 +90,7 @@ export default function Today() {
         <SurpriseCard
           fact={
             ridership.data
-              ? `Malaysians made ${formatNumber(ridership.data.totalRail + ridership.data.totalBus)} public transport trips on ${ridership.data.asOf}.`
+              ? `Malaysians made ${formatNumber(ridership.data.totalRail + ridership.data.totalBus)} public transport trips on ${formatDate(ridership.data.asOf)}.`
               : 'Penang has the highest population density in Malaysia — 1,659 people per km².'
           }
           source="data.gov.my · Prasarana ridership headline"

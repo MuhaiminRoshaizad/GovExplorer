@@ -1,10 +1,11 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react-native';
+import { ArrowDownRight, ArrowUpRight, Lightbulb } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Dimensions, View } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
 import { Badge, Card, Skeleton, Stack, Text } from '@/components/ui';
-import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
+import { useStatePref } from '@/data/StateContext';
+import { formatCompact, formatDate, formatNumber, formatPercent, formatYear } from '@/lib/format';
 import {
   useCategoricalSnapshotQuery,
   useCurrencyHistoryQuery,
@@ -18,7 +19,6 @@ import {
   usePopulationLatestQuery,
   useRidershipHistoryQuery,
   useRidershipLatestQuery,
-  useScalarLatestQuery,
   useTimeSeriesQuery,
   useUnemploymentHistoryQuery,
   useUnemploymentLatestQuery,
@@ -26,15 +26,15 @@ import {
 import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
+import { categoricalAnalysis, timeSeriesAnalysis } from './analysis';
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_INSET = S.lg * 2 + S.md * 2;
 const CHART_WIDTH = SCREEN_WIDTH - CHART_INSET;
+const X_AXIS_HEIGHT = 56;
 
 type Tone = { color: string; bg: string };
-
-export type DetailProps = {
-  tone: Tone;
-};
+export type DetailProps = { tone: Tone };
 
 // ─────────────────────────── Shared chrome ───────────────────────────
 
@@ -45,6 +45,7 @@ export function HeroNumber({
   asOf,
   isLoading,
   isError,
+  formatDateLabel = true,
 }: {
   value?: string;
   unit?: string;
@@ -52,8 +53,10 @@ export function HeroNumber({
   asOf?: string;
   isLoading: boolean;
   isError: boolean;
+  formatDateLabel?: boolean;
 }) {
   const { theme } = useTheme();
+  const asOfLabel = asOf ? (formatDateLabel ? `As of ${formatDate(asOf)}` : `As of ${asOf}`) : '';
   return (
     <Card variant="flat" padding={S.lg} radius={R.xl} style={{ marginTop: S.xxl }}>
       {isLoading ? (
@@ -64,9 +67,7 @@ export function HeroNumber({
         </View>
       ) : isError || !value ? (
         <View>
-          <Text variant="numeric" tone="muted">
-            —
-          </Text>
+          <Text variant="numeric" tone="muted">—</Text>
           <Text variant="caption" tone="muted" style={{ marginTop: S.xs }}>
             Couldn’t load this dataset
           </Text>
@@ -75,11 +76,7 @@ export function HeroNumber({
         <View>
           <Stack direction="row" align="baseline" gap={S.sm}>
             <Text variant="numeric">{value}</Text>
-            {unit ? (
-              <Text variant="bodyMedium" tone="muted">
-                {unit}
-              </Text>
-            ) : null}
+            {unit ? <Text variant="bodyMedium" tone="muted">{unit}</Text> : null}
           </Stack>
           <Stack direction="row" align="center" gap={S.xs} style={{ marginTop: S.xs }}>
             {delta && delta.sign !== 0 ? (
@@ -89,9 +86,7 @@ export function HeroNumber({
                 <ArrowDownRight size={14} color={theme.semantic.danger} strokeWidth={2.4} />
               )
             ) : null}
-            <Text variant="caption" tone="soft">
-              {delta?.label ?? (asOf ? `As of ${asOf}` : '')}
-            </Text>
+            <Text variant="caption" tone="soft">{delta?.label ?? asOfLabel}</Text>
           </Stack>
         </View>
       )}
@@ -132,9 +127,167 @@ function ChartCard({
   );
 }
 
-function shortLabel(name: string, max = 9): string {
+function AnalysisCard({ insights, isLoading }: { insights: string[]; isLoading: boolean }) {
+  const { theme } = useTheme();
+  if (isLoading) {
+    return (
+      <Card variant="outline" padding={S.lg} radius={R.xl} style={{ marginTop: S.md }}>
+        <Skeleton width={140} height={12} />
+        <View style={{ height: S.md }} />
+        <Skeleton width="100%" height={14} />
+        <View style={{ height: 6 }} />
+        <Skeleton width="80%" height={14} />
+      </Card>
+    );
+  }
+  if (insights.length === 0) return null;
+  return (
+    <Card variant="outline" padding={S.lg} radius={R.xl} style={{ marginTop: S.md }}>
+      <Stack direction="row" align="center" gap={S.xs}>
+        <Lightbulb size={13} color={theme.textSoft} strokeWidth={1.8} />
+        <Text variant="micro" tone="muted">KEY TAKEAWAYS</Text>
+      </Stack>
+      <View style={{ marginTop: S.sm, gap: 6 }}>
+        {insights.map((line, i) => (
+          <View key={i} style={{ flexDirection: 'row', gap: S.sm }}>
+            <Text variant="body" tone="soft" style={{ width: 8 }}>·</Text>
+            <Text variant="body" tone="soft" style={{ flex: 1, lineHeight: 20 }}>{line}</Text>
+          </View>
+        ))}
+      </View>
+    </Card>
+  );
+}
+
+function shortLabel(name: string, max = 7): string {
   if (name.length <= max) return name;
   return name.slice(0, max - 1) + '…';
+}
+
+// Tooltip components ----------------------------------------------------------
+
+type TooltipDataPoint = { value: number; date?: string; label?: string };
+
+function makePointerLabel(
+  data: TooltipDataPoint[],
+  tone: Tone,
+  fmt?: (v: number) => string,
+  unit?: string
+) {
+  return (items: { value: number; index: number }[]) => {
+    const idx = items?.[0]?.index ?? 0;
+    const item = data[idx] ?? items?.[0];
+    const value = item?.value ?? items?.[0]?.value ?? 0;
+    const dateLabel = item?.date ? formatDate(item.date) : (item?.label ?? '');
+    return (
+      <TooltipBubble
+        title={dateLabel}
+        value={fmt ? fmt(value) : formatNumber(value)}
+        unit={unit}
+        tone={tone}
+      />
+    );
+  };
+}
+
+function TooltipBubble({
+  title,
+  value,
+  unit,
+  tone,
+}: {
+  title?: string;
+  value: string;
+  unit?: string;
+  tone: Tone;
+}) {
+  const { theme } = useTheme();
+  return (
+    <View
+      style={{
+        backgroundColor: theme.surface,
+        borderRadius: R.md,
+        borderWidth: 1,
+        borderColor: theme.border,
+        paddingHorizontal: S.md,
+        paddingVertical: S.sm,
+        minWidth: 100,
+        shadowColor: '#000',
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 6,
+      }}
+    >
+      {title ? (
+        <Text variant="caption" tone="muted" numberOfLines={1}>
+          {title}
+        </Text>
+      ) : null}
+      <Stack direction="row" align="baseline" gap={4}>
+        <Text variant="bodyBold" style={{ color: tone.color }} numberOfLines={1}>
+          {value}
+        </Text>
+        {unit ? (
+          <Text variant="caption" tone="muted" numberOfLines={1}>
+            {unit}
+          </Text>
+        ) : null}
+      </Stack>
+    </View>
+  );
+}
+
+// Shared chart prop builders --------------------------------------------------
+
+function lineChartProps(theme: any, tone: Tone, data: any[], color: string = tone.color) {
+  return {
+    width: CHART_WIDTH,
+    height: 180,
+    hideDataPoints: true,
+    curved: true,
+    color,
+    startFillColor: color,
+    endFillColor: color,
+    startOpacity: 0.25,
+    endOpacity: 0,
+    areaChart: true,
+    thickness: 2,
+    hideRules: true,
+    yAxisColor: 'transparent' as const,
+    xAxisColor: theme.border,
+    yAxisTextStyle: { color: theme.textMuted, fontSize: 10 },
+    formatYLabel: (v: string) => formatCompact(Number(v)),
+    noOfSections: 3,
+    initialSpacing: 0,
+    spacing: Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1)),
+  };
+}
+
+function pointerConfig(theme: any, tone: Tone, labelComponent: any) {
+  return {
+    pointerStripUptoDataPoint: true,
+    pointerStripWidth: 1,
+    pointerStripColor: theme.borderStrong,
+    pointerColor: tone.color,
+    radius: 5,
+    pointerLabelWidth: 130,
+    pointerLabelHeight: 56,
+    pointerVanishDelay: 1200,
+    activatePointersOnLongPress: false,
+    pointerLabelComponent: labelComponent,
+  };
+}
+
+function barTooltip(tone: Tone, fmt?: (v: number) => string, unit?: string) {
+  return (item: { value: number; label?: string }) => (
+    <TooltipBubble
+      title={item.label}
+      value={fmt ? fmt(item.value) : formatNumber(item.value)}
+      unit={unit}
+      tone={tone}
+    />
+  );
 }
 
 // ─────────────────────────── Coming soon ───────────────────────────
@@ -153,7 +306,7 @@ export function ComingSoonDetail() {
   );
 }
 
-// ─────────────────────────── Generic detail components ───────────────────────────
+// ─────────────────────────── Generic line ───────────────────────────
 
 type GenericTSProps = DetailProps & {
   datasetId: string;
@@ -164,6 +317,7 @@ type GenericTSProps = DetailProps & {
   formatHero?: (v: number) => string;
   chartTitle: string;
   limit?: number;
+  periodLabel?: string;
 };
 
 export function GenericLineDetail({
@@ -176,11 +330,14 @@ export function GenericLineDetail({
   formatHero,
   chartTitle,
   limit = 60,
+  periodLabel,
 }: GenericTSProps) {
   const { theme } = useTheme();
   const q = useTimeSeriesQuery({ id: datasetId, valueField, filterField, filterValue, limit });
-  const data = (q.data ?? []).map((p) => ({ value: p.value, label: '' }));
-  const latest = q.data?.[q.data.length - 1];
+  const points = q.data ?? [];
+  const data = points.map((p) => ({ value: p.value, label: '', date: p.date }));
+  const latest = points[points.length - 1];
+  const insights = timeSeriesAnalysis(points, { unit, fmt: formatHero, periodLabel });
 
   return (
     <>
@@ -199,30 +356,16 @@ export function GenericLineDetail({
       >
         <LineChart
           data={data}
-          width={CHART_WIDTH}
-          height={180}
-          hideDataPoints
-          curved
-          color={tone.color}
-          startFillColor={tone.color}
-          endFillColor={tone.color}
-          startOpacity={0.25}
-          endOpacity={0}
-          areaChart
-          thickness={2}
-          hideRules
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          formatYLabel={(v: string) => formatCompact(Number(v))}
-          noOfSections={3}
-          initialSpacing={0}
-          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
+          {...lineChartProps(theme, tone, data)}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(data, tone, formatHero, unit))}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={q.isLoading} />
     </>
   );
 }
+
+// ─────────────────────────── Generic bar ───────────────────────────
 
 type GenericBarProps = DetailProps & {
   datasetId: string;
@@ -253,6 +396,7 @@ export function GenericBarDetail({
   rotateLabel = true,
 }: GenericBarProps) {
   const { theme } = useTheme();
+  const { state: userState } = useStatePref();
   const q = useCategoricalSnapshotQuery({
     id: datasetId,
     valueField,
@@ -265,11 +409,26 @@ export function GenericBarDetail({
   const points = (q.data?.points ?? []).slice(0, maxBars);
   const total = points.reduce((acc, p) => acc + p.value, 0);
   const top = points[0];
-  const data = points.map((p) => ({
-    value: p.value,
-    label: shortLabel(p.name, 8),
-    frontColor: tone.color,
-  }));
+
+  const isStateChart = categoryField === 'state' || categoryField === 'district';
+  const userStateMatch =
+    isStateChart ? points.find((p) => p.name === userState.apiName) : undefined;
+
+  const data = points.map((p) => {
+    const isUserState = isStateChart && p.name === userState.apiName;
+    return {
+      value: p.value,
+      label: shortLabel(p.name, 6),
+      fullLabel: p.name,
+      frontColor: isUserState ? theme.accent.base : tone.color,
+    };
+  });
+
+  const insights = categoricalAnalysis(points, {
+    unit,
+    fmt: formatHero,
+    userStateName: isStateChart ? userState.apiName : undefined,
+  });
 
   return (
     <>
@@ -285,6 +444,26 @@ export function GenericBarDetail({
         isLoading={q.isLoading}
         isError={q.isError}
       />
+
+      {userStateMatch ? (
+        <Card
+          variant="flat"
+          padding={S.md}
+          radius={R.lg}
+          style={{ marginTop: S.md, backgroundColor: theme.accent.glow, borderWidth: 0 }}
+        >
+          <Stack direction="row" align="center" justify="space-between">
+            <Stack gap={2}>
+              <Text variant="micro" style={{ color: theme.accent.base }}>YOUR STATE</Text>
+              <Text variant="bodyBold">{userStateMatch.name}</Text>
+            </Stack>
+            <Text variant="h3" style={{ color: theme.accent.base }}>
+              {formatHero ? formatHero(userStateMatch.value) : formatNumber(userStateMatch.value)}
+            </Text>
+          </Stack>
+        </Card>
+      ) : null}
+
       <ChartCard
         title={chartTitle}
         isLoading={q.isLoading}
@@ -294,7 +473,7 @@ export function GenericBarDetail({
         <BarChart
           data={data}
           width={CHART_WIDTH}
-          height={260}
+          height={220}
           barWidth={Math.max(8, Math.min(20, (CHART_WIDTH - 40) / data.length - 8))}
           spacing={Math.max(4, (CHART_WIDTH - 40) / data.length - 14)}
           frontColor={tone.color}
@@ -304,29 +483,39 @@ export function GenericBarDetail({
           formatYLabel={(v: string) => formatCompact(Number(v))}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          xAxisLabelsHeight={X_AXIS_HEIGHT}
           rotateLabel={rotateLabel}
           noOfSections={3}
+          renderTooltip={barTooltip(tone, formatHero, unit)}
         />
       </ChartCard>
+
+      <AnalysisCard insights={insights} isLoading={q.isLoading} />
     </>
   );
 }
 
-// ─────────────────────────── Currency (already built) ───────────────────────────
+// ─────────────────────────── Currency ───────────────────────────
 
 export function CurrencyDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useCurrencyLatestQuery('usd');
   const history = useCurrencyHistoryQuery('usd', 30);
 
-  const data = (history.data ?? []).map((p) => ({ value: p.rate, label: '' }));
+  const points = history.data ?? [];
+  const data = points.map((p) => ({ value: p.rate, label: '', date: p.date }));
   const delta = latest.data?.delta;
   const deltaLabel =
     delta != null
-      ? `${delta >= 0 ? '+' : ''}${delta.toFixed(4)} vs prev day · as of ${latest.data?.asOf}`
-      : latest.data?.asOf
-        ? `As of ${latest.data.asOf}`
-        : '';
+      ? `${delta >= 0 ? '+' : ''}${delta.toFixed(4)} vs prev day · ${latest.data?.asOf ? formatDate(latest.data.asOf) : ''}`
+      : '';
+
+  const fmt = (v: number) => v.toFixed(4);
+  const insights = timeSeriesAnalysis(points.map((p) => ({ date: p.date, value: p.rate })), {
+    unit: 'MYR per USD',
+    fmt,
+    periodLabel: 'day',
+  });
 
   return (
     <>
@@ -346,48 +535,39 @@ export function CurrencyDetail({ tone }: DetailProps) {
       >
         <LineChart
           data={data}
-          width={CHART_WIDTH}
-          height={180}
-          hideDataPoints
-          curved
-          color={tone.color}
-          startFillColor={tone.color}
-          endFillColor={tone.color}
-          startOpacity={0.25}
-          endOpacity={0}
-          areaChart
-          thickness={2}
-          hideRules
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          noOfSections={3}
-          initialSpacing={0}
-          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
+          {...lineChartProps(theme, tone, data)}
+          formatYLabel={(v: string) => Number(v).toFixed(2)}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(data, tone, fmt, 'MYR / USD'))}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
 
-// ─────────────────────────── Fuel (already built) ───────────────────────────
+// ─────────────────────────── Fuel ───────────────────────────
 
 export function FuelDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useFuelPriceLatestQuery();
   const history = useFuelPriceHistoryQuery(26);
 
-  const ron95Data = (history.data ?? []).map((p) => ({ value: p.ron95, label: '' }));
-  const ron97Data = (history.data ?? []).map((p) => ({ value: p.ron97, label: '' }));
-  const dieselData = (history.data ?? []).map((p) => ({ value: p.diesel, label: '' }));
+  const hist = history.data ?? [];
+  const ron95Data = hist.map((p) => ({ value: p.ron95, label: '', date: p.date }));
+  const ron97Data = hist.map((p) => ({ value: p.ron97, label: '', date: p.date }));
+  const dieselData = hist.map((p) => ({ value: p.diesel, label: '', date: p.date }));
 
   const delta = latest.data?.weeklyDeltaRon95;
   const deltaLabel =
     delta != null
       ? `RON95 ${delta >= 0 ? '+' : ''}${delta.toFixed(2)} this week`
-      : latest.data?.asOf
-        ? `As of ${latest.data.asOf}`
-        : '';
+      : '';
+
+  const fmt = (v: number) => `RM ${v.toFixed(2)}`;
+  const insights = timeSeriesAnalysis(
+    hist.map((p) => ({ date: p.date, value: p.ron95 })),
+    { unit: '/ litre', fmt, periodLabel: 'week' }
+  );
 
   return (
     <>
@@ -437,9 +617,11 @@ export function FuelDetail({ tone }: DetailProps) {
           yAxisColor="transparent"
           xAxisColor={theme.border}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          formatYLabel={(v: string) => `RM${Number(v).toFixed(1)}`}
           noOfSections={3}
           initialSpacing={4}
           spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(ron95Data.length - 1, 1))}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(ron95Data, tone, fmt, 'RON95'))}
         />
         <Stack direction="row" gap={S.md} style={{ paddingHorizontal: S.sm, marginTop: S.sm }}>
           <LegendDot color={tone.color} label="RON95" />
@@ -447,6 +629,8 @@ export function FuelDetail({ tone }: DetailProps) {
           <LegendDot color={theme.chart.teal} label="Diesel" />
         </Stack>
       </ChartCard>
+
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
@@ -458,13 +642,21 @@ export function RidershipDetail({ tone }: DetailProps) {
   const latest = useRidershipLatestQuery();
   const history = useRidershipHistoryQuery(30);
 
-  const historyData = (history.data ?? []).map((p) => ({ value: p.total, label: '' }));
+  const hist = history.data ?? [];
+  const historyData = hist.map((p) => ({ value: p.total, label: '', date: p.date }));
   const byService = (latest.data?.byService ?? []).slice(0, 10);
   const barData = byService.map((s) => ({
     value: s.value,
-    label: shortLabel(s.name, 9),
+    label: shortLabel(s.name, 7),
+    fullLabel: s.name,
     frontColor: tone.color,
   }));
+
+  const insights = timeSeriesAnalysis(hist.map((p) => ({ date: p.date, value: p.total })), {
+    unit: 'trips',
+    fmt: (v) => formatCompact(v),
+    periodLabel: 'day',
+  });
 
   return (
     <>
@@ -476,10 +668,7 @@ export function RidershipDetail({ tone }: DetailProps) {
         isError={latest.isError}
         delta={
           latest.data
-            ? {
-                sign: 0,
-                label: `${formatCompact(latest.data.totalRail)} rail · ${formatCompact(latest.data.totalBus)} bus`,
-              }
+            ? { sign: 0, label: `${formatCompact(latest.data.totalRail)} rail · ${formatCompact(latest.data.totalBus)} bus` }
             : undefined
         }
       />
@@ -491,25 +680,8 @@ export function RidershipDetail({ tone }: DetailProps) {
       >
         <LineChart
           data={historyData}
-          width={CHART_WIDTH}
-          height={180}
-          hideDataPoints
-          curved
-          color={tone.color}
-          startFillColor={tone.color}
-          endFillColor={tone.color}
-          startOpacity={0.25}
-          endOpacity={0}
-          areaChart
-          thickness={2}
-          hideRules
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          formatYLabel={(v: string) => formatCompact(Number(v))}
-          noOfSections={3}
-          initialSpacing={0}
-          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(historyData.length - 1, 1))}
+          {...lineChartProps(theme, tone, historyData)}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(historyData, tone, formatCompact, 'rail trips'))}
         />
       </ChartCard>
       <ChartCard
@@ -531,10 +703,13 @@ export function RidershipDetail({ tone }: DetailProps) {
           formatYLabel={(v: string) => formatCompact(Number(v))}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          xAxisLabelsHeight={X_AXIS_HEIGHT}
           rotateLabel
           noOfSections={3}
+          renderTooltip={barTooltip(tone, formatCompact, 'trips')}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
@@ -545,8 +720,15 @@ export function InflationDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useInflationLatestQuery();
   const history = useInflationHistoryQuery(24);
+  const points = history.data ?? [];
+  const data = points.map((p) => ({ value: p.yoy, label: '', date: p.date }));
 
-  const data = (history.data ?? []).map((p) => ({ value: p.yoy, label: '' }));
+  const fmt = (v: number) => `${v.toFixed(2)}%`;
+  const insights = timeSeriesAnalysis(points.map((p) => ({ date: p.date, value: p.yoy })), {
+    unit: 'YoY',
+    fmt,
+    periodLabel: 'month',
+  });
 
   return (
     <>
@@ -557,7 +739,7 @@ export function InflationDetail({ tone }: DetailProps) {
           latest.data?.mom != null
             ? {
                 sign: latest.data.mom > 0 ? 1 : latest.data.mom < 0 ? -1 : 0,
-                label: `${latest.data.mom >= 0 ? '+' : ''}${latest.data.mom.toFixed(2)}% MoM · ${latest.data.asOf}`,
+                label: `${latest.data.mom >= 0 ? '+' : ''}${latest.data.mom.toFixed(2)}% MoM · ${formatDate(latest.data.asOf)}`,
               }
             : undefined
         }
@@ -573,26 +755,12 @@ export function InflationDetail({ tone }: DetailProps) {
       >
         <LineChart
           data={data}
-          width={CHART_WIDTH}
-          height={180}
-          hideDataPoints
-          curved
-          color={tone.color}
-          startFillColor={tone.color}
-          endFillColor={tone.color}
-          startOpacity={0.25}
-          endOpacity={0}
-          areaChart
-          thickness={2}
-          hideRules
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          noOfSections={3}
-          initialSpacing={0}
-          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
+          {...lineChartProps(theme, tone, data)}
+          formatYLabel={(v: string) => `${Number(v).toFixed(1)}%`}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(data, tone, fmt))}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
@@ -603,7 +771,15 @@ export function UnemploymentDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useUnemploymentLatestQuery();
   const history = useUnemploymentHistoryQuery(24);
-  const data = (history.data ?? []).map((p) => ({ value: p.rate, label: '' }));
+  const points = history.data ?? [];
+  const data = points.map((p) => ({ value: p.rate, label: '', date: p.date }));
+
+  const fmt = (v: number) => `${v.toFixed(2)}%`;
+  const insights = timeSeriesAnalysis(points.map((p) => ({ date: p.date, value: p.rate })), {
+    unit: 'unemployment',
+    fmt,
+    periodLabel: 'month',
+  });
 
   return (
     <>
@@ -615,10 +791,7 @@ export function UnemploymentDetail({ tone }: DetailProps) {
         isError={latest.isError}
         delta={
           latest.data
-            ? {
-                sign: 0,
-                label: `Participation ${latest.data.pRate.toFixed(1)}% · ${formatCompact(latest.data.unemployed * 1000)} unemployed`,
-              }
+            ? { sign: 0, label: `Participation ${latest.data.pRate.toFixed(1)}% · ${formatCompact(latest.data.unemployed * 1000)} unemployed` }
             : undefined
         }
       />
@@ -630,26 +803,12 @@ export function UnemploymentDetail({ tone }: DetailProps) {
       >
         <LineChart
           data={data}
-          width={CHART_WIDTH}
-          height={180}
-          hideDataPoints
-          curved
-          color={tone.color}
-          startFillColor={tone.color}
-          endFillColor={tone.color}
-          startOpacity={0.25}
-          endOpacity={0}
-          areaChart
-          thickness={2}
-          hideRules
-          yAxisColor="transparent"
-          xAxisColor={theme.border}
-          yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
-          noOfSections={3}
-          initialSpacing={0}
-          spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(data.length - 1, 1))}
+          {...lineChartProps(theme, tone, data)}
+          formatYLabel={(v: string) => `${Number(v).toFixed(1)}%`}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(data, tone, fmt))}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
@@ -660,11 +819,20 @@ export function GdpDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const latest = useGdpLatestQuery();
   const history = useGdpHistoryQuery(12);
-  const data = (history.data ?? []).map((p) => ({
+  const points = history.data ?? [];
+  const data = points.map((p) => ({
     value: p.yoy,
     label: quarterLabel(p.date),
+    fullLabel: quarterLabel(p.date),
     frontColor: p.yoy >= 0 ? tone.color : theme.semantic.danger,
   }));
+  const fmt = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+  const insights = timeSeriesAnalysis(points.map((p) => ({ date: p.date, value: p.yoy })), {
+    unit: 'YoY',
+    fmt,
+    periodLabel: 'quarter',
+  });
+
   return (
     <>
       <HeroNumber
@@ -681,6 +849,7 @@ export function GdpDetail({ tone }: DetailProps) {
         asOf={latest.data ? quarterLabel(latest.data.asOf) : undefined}
         isLoading={latest.isLoading}
         isError={latest.isError}
+        formatDateLabel={false}
       />
       <ChartCard
         title="Last 12 quarters · YoY %"
@@ -691,18 +860,23 @@ export function GdpDetail({ tone }: DetailProps) {
         <BarChart
           data={data}
           width={CHART_WIDTH}
-          height={200}
+          height={220}
           barWidth={16}
           spacing={Math.max(2, (CHART_WIDTH - 16 * data.length - 24) / Math.max(data.length, 1))}
           frontColor={tone.color}
           yAxisColor="transparent"
           xAxisColor={theme.border}
           hideRules
+          formatYLabel={(v: string) => `${Number(v).toFixed(0)}%`}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          xAxisLabelsHeight={X_AXIS_HEIGHT}
+          rotateLabel
           noOfSections={3}
+          renderTooltip={barTooltip(tone, fmt)}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={history.isLoading} />
     </>
   );
 }
@@ -717,29 +891,60 @@ function quarterLabel(date: string): string {
 
 export function PopulationDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
+  const { state: userState } = useStatePref();
   const q = usePopulationLatestQuery();
   const byState = (q.data?.byState ?? []).slice(0, 16);
+  const userEntry = byState.find((s) => s.state === userState.apiName);
+
   const data = byState.map((s) => ({
     value: s.population,
-    label: shortLabel(s.state, 9),
-    frontColor: tone.color,
+    label: shortLabel(s.state, 6),
+    fullLabel: s.state,
+    frontColor: s.state === userState.apiName ? theme.accent.base : tone.color,
   }));
+
+  const insights = categoricalAnalysis(
+    byState.map((s) => ({ name: s.state, value: s.population })),
+    {
+      unit: 'thousand',
+      fmt: (v) => formatCompact(v * 1000),
+      userStateName: userState.apiName,
+    }
+  );
+
   return (
     <>
       <HeroNumber
         value={q.data ? formatCompact(q.data.total * 1000) : undefined}
         unit="people"
-        asOf={q.data ? new Date(q.data.asOf).getFullYear().toString() : undefined}
+        asOf={q.data ? formatYear(q.data.asOf) : undefined}
         isLoading={q.isLoading}
         isError={q.isError}
-        delta={
-          q.data
-            ? { sign: 0, label: `${q.data.byState.length} states + federal territories` }
-            : undefined
-        }
+        formatDateLabel={false}
+        delta={q.data ? { sign: 0, label: `${q.data.byState.length} states + federal territories` } : undefined}
       />
+
+      {userEntry ? (
+        <Card
+          variant="flat"
+          padding={S.md}
+          radius={R.lg}
+          style={{ marginTop: S.md, backgroundColor: theme.accent.glow, borderWidth: 0 }}
+        >
+          <Stack direction="row" align="center" justify="space-between">
+            <Stack gap={2}>
+              <Text variant="micro" style={{ color: theme.accent.base }}>YOUR STATE</Text>
+              <Text variant="bodyBold">{userEntry.state}</Text>
+            </Stack>
+            <Text variant="h3" style={{ color: theme.accent.base }}>
+              {formatCompact(userEntry.population * 1000)}
+            </Text>
+          </Stack>
+        </Card>
+      ) : null}
+
       <ChartCard
-        title={`By state · ${q.data ? new Date(q.data.asOf).getFullYear() : ''}`}
+        title={`By state · ${q.data ? formatYear(q.data.asOf) : ''}`}
         isLoading={q.isLoading}
         isError={q.isError}
         empty={data.length === 0}
@@ -757,10 +962,13 @@ export function PopulationDetail({ tone }: DetailProps) {
           formatYLabel={(v: string) => formatCompact(Number(v) * 1000)}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          xAxisLabelsHeight={X_AXIS_HEIGHT}
           rotateLabel
           noOfSections={3}
+          renderTooltip={barTooltip(tone, (v) => formatCompact(v * 1000), 'people')}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={q.isLoading} />
     </>
   );
 }
@@ -771,9 +979,15 @@ export function HouseholdIncomeDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const mean = useTimeSeriesQuery({ id: 'hh_income', valueField: 'income_mean', limit: 12 });
   const median = useTimeSeriesQuery({ id: 'hh_income', valueField: 'income_median', limit: 12 });
-  const meanData = (mean.data ?? []).map((p) => ({ value: p.value, label: '' }));
-  const medianData = (median.data ?? []).map((p) => ({ value: p.value, label: '' }));
-  const latestMedian = median.data?.[median.data.length - 1];
+  const meanArr = mean.data ?? [];
+  const medianArr = median.data ?? [];
+  const meanData = meanArr.map((p) => ({ value: p.value, label: '', date: p.date }));
+  const medianData = medianArr.map((p) => ({ value: p.value, label: '', date: p.date }));
+  const latestMedian = medianArr[medianArr.length - 1];
+
+  const fmt = (v: number) => `RM ${formatNumber(v)}`;
+  const insights = timeSeriesAnalysis(medianArr, { unit: 'median monthly', fmt });
+
   return (
     <>
       <HeroNumber
@@ -783,8 +997,8 @@ export function HouseholdIncomeDetail({ tone }: DetailProps) {
         isLoading={median.isLoading}
         isError={median.isError}
         delta={
-          mean.data?.[mean.data.length - 1]
-            ? { sign: 0, label: `Mean RM ${formatNumber(mean.data[mean.data.length - 1].value)}` }
+          meanArr[meanArr.length - 1]
+            ? { sign: 0, label: `Mean RM ${formatNumber(meanArr[meanArr.length - 1].value)}` }
             : undefined
         }
       />
@@ -812,17 +1026,19 @@ export function HouseholdIncomeDetail({ tone }: DetailProps) {
           noOfSections={3}
           initialSpacing={4}
           spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(medianData.length - 1, 1))}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(medianData, tone, fmt, 'median'))}
         />
         <Stack direction="row" gap={S.md} style={{ paddingHorizontal: S.sm, marginTop: S.sm }}>
           <LegendDot color={tone.color} label="Median" />
           <LegendDot color={theme.chart.coral} label="Mean" />
         </Stack>
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={median.isLoading} />
     </>
   );
 }
 
-// ─────────────────────────── Productivity (sectoral) ───────────────────────────
+// ─────────────────────────── Productivity ───────────────────────────
 
 export function ProductivityDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
@@ -833,13 +1049,18 @@ export function ProductivityDetail({ tone }: DetailProps) {
     filterField: 'series',
     filterValue: 'abs',
   });
-  const points = (q.data?.points ?? []).filter((p) => p.name !== 'p0').slice(0, 10);
+  const all = q.data?.points ?? [];
+  const overall = all.find((p) => p.name === 'p0');
+  const points = all.filter((p) => p.name !== 'p0').slice(0, 10);
   const data = points.map((p) => ({
     value: p.value,
     label: p.name,
+    fullLabel: `Sector ${p.name}`,
     frontColor: tone.color,
   }));
-  const overall = q.data?.points.find((p) => p.name === 'p0');
+  const fmt = (v: number) => `RM ${v.toFixed(1)}`;
+  const insights = categoricalAnalysis(points, { unit: 'RM / hour', fmt });
+
   return (
     <>
       <HeroNumber
@@ -848,6 +1069,7 @@ export function ProductivityDetail({ tone }: DetailProps) {
         asOf={q.data ? quarterLabel(q.data.asOf) : undefined}
         isLoading={q.isLoading}
         isError={q.isError}
+        formatDateLabel={false}
       />
       <ChartCard
         title="By sector"
@@ -867,10 +1089,13 @@ export function ProductivityDetail({ tone }: DetailProps) {
           hideRules
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.textMuted, fontSize: 9 }}
+          xAxisLabelsHeight={X_AXIS_HEIGHT}
           rotateLabel
           noOfSections={3}
+          renderTooltip={barTooltip(tone, fmt)}
         />
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={q.isLoading} />
     </>
   );
 }
@@ -881,18 +1106,25 @@ export function EpfDividendDetail({ tone }: DetailProps) {
   const { theme } = useTheme();
   const conv = useTimeSeriesQuery({ id: 'epf_dividend', valueField: 'conventional', limit: 12 });
   const shariah = useTimeSeriesQuery({ id: 'epf_dividend', valueField: 'shariah', limit: 12 });
-  const convData = (conv.data ?? []).map((p) => ({ value: p.value, label: '' }));
-  const shariahData = (shariah.data ?? []).map((p) => ({ value: p.value, label: '' }));
-  const latestConv = conv.data?.[conv.data.length - 1];
-  const latestShariah = shariah.data?.[shariah.data.length - 1];
+  const convArr = conv.data ?? [];
+  const shariahArr = shariah.data ?? [];
+  const convData = convArr.map((p) => ({ value: p.value, label: '', date: p.date }));
+  const shariahData = shariahArr.map((p) => ({ value: p.value, label: '', date: p.date }));
+  const latestConv = convArr[convArr.length - 1];
+  const latestShariah = shariahArr[shariahArr.length - 1];
+
+  const fmt = (v: number) => `${v.toFixed(2)}%`;
+  const insights = timeSeriesAnalysis(convArr, { unit: 'conventional', fmt, periodLabel: 'year' });
+
   return (
     <>
       <HeroNumber
         value={latestConv ? `${latestConv.value.toFixed(2)}%` : undefined}
         unit="conventional"
+        asOf={latestConv?.date}
         delta={
           latestShariah
-            ? { sign: 0, label: `${latestShariah.value.toFixed(2)}% Shariah · ${new Date(latestShariah.date).getFullYear()}` }
+            ? { sign: 0, label: `${latestShariah.value.toFixed(2)}% Shariah · ${formatYear(latestShariah.date)}` }
             : undefined
         }
         isLoading={conv.isLoading}
@@ -918,15 +1150,18 @@ export function EpfDividendDetail({ tone }: DetailProps) {
           yAxisColor="transparent"
           xAxisColor={theme.border}
           yAxisTextStyle={{ color: theme.textMuted, fontSize: 10 }}
+          formatYLabel={(v: string) => `${Number(v).toFixed(0)}%`}
           noOfSections={3}
           initialSpacing={4}
           spacing={Math.max(2, (CHART_WIDTH - 12) / Math.max(convData.length - 1, 1))}
+          pointerConfig={pointerConfig(theme, tone, makePointerLabel(convData, tone, fmt, 'conventional'))}
         />
         <Stack direction="row" gap={S.md} style={{ paddingHorizontal: S.sm, marginTop: S.sm }}>
           <LegendDot color={tone.color} label="Conventional" />
           <LegendDot color={theme.chart.teal} label="Shariah" />
         </Stack>
       </ChartCard>
+      <AnalysisCard insights={insights} isLoading={conv.isLoading} />
     </>
   );
 }

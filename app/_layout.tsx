@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ScrollProvider } from '@/components/system/ScrollContext';
+import { StateProvider } from '@/data/StateContext';
 import { I18nProvider } from '@/i18n';
 import { queryClient } from '@/lib/queryClient';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -45,9 +46,11 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <I18nProvider>
-              <ScrollProvider>
-                <AppNavigator />
-              </ScrollProvider>
+              <StateProvider>
+                <ScrollProvider>
+                  <AppNavigator />
+                </ScrollProvider>
+              </StateProvider>
             </I18nProvider>
           </ThemeProvider>
         </QueryClientProvider>

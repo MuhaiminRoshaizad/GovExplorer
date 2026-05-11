@@ -50,19 +50,19 @@ export type RidershipPoint = { date: string; total: number };
 const HOUR = 60 * 60 * 1000;
 
 const SERVICE_LABELS: Record<string, string> = {
-  rail_lrt_ampang: 'LRT Ampang',
-  rail_lrt_kj: 'LRT Kelana Jaya',
-  rail_mrt_kajang: 'MRT Kajang',
-  rail_mrt_pjy: 'MRT Putrajaya',
-  rail_monorail: 'Monorail',
+  rail_lrt_ampang: 'LRT Amp',
+  rail_lrt_kj: 'LRT KJ',
+  rail_mrt_kajang: 'MRT Kaj',
+  rail_mrt_pjy: 'MRT Pjy',
+  rail_monorail: 'Mono',
   rail_ets: 'ETS',
-  rail_intercity: 'Intercity',
-  rail_komuter: 'KTM Komuter',
-  rail_komuter_utara: 'Komuter Utara',
-  rail_tebrau: 'Shuttle Tebrau',
-  bus_rkl: 'Rapid KL Bus',
-  bus_rkn: 'Rapid Kuantan Bus',
-  bus_rpn: 'Rapid Penang Bus',
+  rail_intercity: 'ICty',
+  rail_komuter: 'Komuter',
+  rail_komuter_utara: 'Utara',
+  rail_tebrau: 'Tebrau',
+  bus_rkl: 'Bus KL',
+  bus_rkn: 'Bus KTN',
+  bus_rpn: 'Bus PN',
 };
 
 export function useRidershipLatestQuery() {

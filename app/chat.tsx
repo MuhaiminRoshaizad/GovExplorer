@@ -1,6 +1,5 @@
-import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowUp, Sparkles, X } from 'lucide-react-native';
+import { ArrowUp, Sparkles } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -14,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge, Card, Stack, Tap, Text } from '@/components/ui';
+import { AppBar, Badge, Card, Stack, Tap, Text } from '@/components/ui';
 import { useI18n } from '@/i18n';
 import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
@@ -43,31 +42,9 @@ export default function ChatScreen() {
   const samples = [t.chat.sampleQuestion1, t.chat.sampleQuestion2, t.chat.sampleQuestion3];
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        direction="row"
-        align="center"
-        justify="space-between"
-        style={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.sm }}
-      >
-        <View style={{ width: 36 }} />
-        <Text variant="bodyBold">{t.chat.title}</Text>
-        <Tap haptic="selection" onPress={() => router.back()}>
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: R.pill,
-              backgroundColor: theme.surfaceMuted,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <X size={18} color={theme.text} strokeWidth={2} />
-          </View>
-        </Tap>
-      </Stack>
+      <AppBar title={t.chat.title} variant="close" />
 
       <View style={{ flex: 1, paddingHorizontal: S.xl, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center' }}>

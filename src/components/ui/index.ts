@@ -6,3 +6,4 @@ export { Badge } from './Badge';
 export { Screen, ScreenScroll } from './Screen';
 export { BottomSheet } from './BottomSheet';
 export { Skeleton } from './Skeleton';
+export { AppBar } from './AppBar';

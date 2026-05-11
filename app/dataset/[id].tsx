@@ -1,12 +1,11 @@
-import { Stack as RouterStack, router, useLocalSearchParams } from 'expo-router';
+import { Stack as RouterStack, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ChevronLeft, ExternalLink } from 'lucide-react-native';
+import { ExternalLink } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import { Linking, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenEnter } from '@/components/system/ScreenEnter';
-import { Badge, Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
+import { AppBar, Badge, Card, ScreenScroll, Stack, Tap, Text } from '@/components/ui';
 import { findDataset, TONE_COLOR, TONE_GLOW } from '@/features/insights/catalogue';
 import {
   ComingSoonDetail,
@@ -24,14 +23,13 @@ import {
   UnemploymentDetail,
   type DetailProps,
 } from '@/features/insights/details';
-import { formatCompact, formatNumber, formatPercent } from '@/lib/format';
+import { formatCompact, formatNumber } from '@/lib/format';
 import { R, S } from '@/theme';
 import { useTheme } from '@/theme';
 
 type DetailFC = ComponentType<DetailProps>;
 
 const DETAIL_BY_ID: Record<string, DetailFC> = {
-  // Bespoke (have their own hooks and shapes)
   exchangerates_daily_1700: CurrencyDetail,
   fuelprice: FuelDetail,
   cpi_headline: InflationDetail,
@@ -43,7 +41,6 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
   productivity_qtr: ProductivityDetail,
   epf_dividend: EpfDividendDetail,
 
-  // Generic line — time series with a single value column
   organ_pledges: (p) => (
     <GenericLineDetail
       tone={p.tone}
@@ -52,6 +49,7 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
       unit="pledges / day"
       chartTitle="Last 60 days"
       limit={60}
+      periodLabel="day"
     />
   ),
   trnsc_daily_fpx: (p) => (
@@ -65,6 +63,7 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
       formatHero={(v) => `RM ${formatCompact(v)}`}
       chartTitle="Last 60 days · FPX value"
       limit={60}
+      periodLabel="day"
     />
   ),
   covid_cases: (p) => (
@@ -74,9 +73,10 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
       valueField="cases_new"
       filterField="state"
       filterValue="Malaysia"
-      unit="new cases / day"
+      unit="new cases"
       chartTitle="Last 60 days · national"
       limit={60}
+      periodLabel="day"
     />
   ),
   blood_donations: (p) => (
@@ -89,10 +89,10 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
       unit="donations / day"
       chartTitle="Last 60 days"
       limit={60}
+      periodLabel="day"
     />
   ),
 
-  // Generic bar — categorical snapshot
   monetary_aggregates: (p) => (
     <GenericBarDetail
       tone={p.tone}
@@ -382,18 +382,15 @@ const DETAIL_BY_ID: Record<string, DetailFC> = {
 export default function DatasetDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, mode } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const match = findDataset(id ?? '');
 
   if (!match) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: insets.top }}>
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
         <RouterStack.Screen options={{ animation: 'slide_from_right' }} />
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-        <View style={{ paddingHorizontal: S.lg, paddingBottom: S.sm }}>
-          <Header title="Not found" />
-        </View>
+        <AppBar title="Not found" />
         <View style={{ padding: S.lg }}>
           <Text variant="body" tone="soft">
             Dataset “{id}” is not in the catalogue.
@@ -415,14 +412,12 @@ export default function DatasetDetail() {
     <View style={{ flex: 1, backgroundColor: theme.bg }}>
       <RouterStack.Screen options={{ animation: 'slide_from_right' }} />
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <View style={{ paddingTop: insets.top, paddingHorizontal: S.lg, paddingBottom: S.sm }}>
-        <Header title={dataset.agency} />
-      </View>
+      <AppBar title={dataset.name} subtitle={`${dataset.agency} · ${dataset.cadence}`} />
 
       <ScreenScroll paddingHorizontal={S.lg}>
         <ScreenEnter>
           <View style={{ marginTop: S.sm }}>
-            <Stack direction="row" align="center" gap={S.sm}>
+            <Stack direction="row" align="center" gap={S.md}>
               <View
                 style={{
                   width: 44,
@@ -435,16 +430,10 @@ export default function DatasetDetail() {
               >
                 <dataset.Icon size={22} color={tone.color} strokeWidth={2} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="caption" tone="muted">
-                  {dataset.agency} · {dataset.cadence}
-                </Text>
-                <Text variant="hero">{dataset.name}</Text>
-              </View>
+              <Text variant="bodyLg" tone="soft" style={{ flex: 1, lineHeight: 22 }}>
+                {dataset.description}
+              </Text>
             </Stack>
-            <Text variant="bodyLg" tone="soft" style={{ marginTop: S.lg }}>
-              {dataset.description}
-            </Text>
           </View>
 
           {Body ? <Body tone={tone} /> : <ComingSoonDetail />}
@@ -482,29 +471,5 @@ export default function DatasetDetail() {
         </ScreenEnter>
       </ScreenScroll>
     </View>
-  );
-}
-
-function Header({ title }: { title: string }) {
-  const { theme } = useTheme();
-  return (
-    <Stack direction="row" align="center" justify="space-between">
-      <Tap haptic="selection" onPress={() => router.back()}>
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: R.pill,
-            backgroundColor: theme.surfaceMuted,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <ChevronLeft size={20} color={theme.text} strokeWidth={2} />
-        </View>
-      </Tap>
-      <Text variant="bodyBold">{title}</Text>
-      <View style={{ width: 36 }} />
-    </Stack>
   );
 }
