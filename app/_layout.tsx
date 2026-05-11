@@ -1,50 +1,39 @@
+import {
+  PlusJakartaSans_300Light,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Stack as RouterStack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+
 import { I18nProvider } from '@/i18n';
-import { useAppFonts } from '@/theme/useAppFonts';
+import { queryClient } from '@/lib/queryClient';
+import { ThemeProvider } from '@/theme';
 
-void SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: true,
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
-
-function ThemedShell() {
-  const T = useTheme();
-  return (
-    <>
-      <StatusBar style={T.scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: T.colors.bg },
-          headerTintColor: T.colors.text,
-          contentStyle: { backgroundColor: T.colors.bg },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="dataset/[id]" options={{ headerShown: false }} />
-      </Stack>
-    </>
-  );
-}
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  const fontsLoaded = useAppFonts();
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_300Light,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
 
   useEffect(() => {
-    if (fontsLoaded) void SplashScreen.hideAsync();
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
@@ -55,7 +44,13 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <I18nProvider>
-              <ThemedShell />
+              <RouterStack screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <RouterStack.Screen name="(tabs)" />
+                <RouterStack.Screen
+                  name="onboarding"
+                  options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+              </RouterStack>
             </I18nProvider>
           </ThemeProvider>
         </QueryClientProvider>
