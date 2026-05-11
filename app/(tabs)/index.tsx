@@ -1,4 +1,4 @@
-import { CloudRain, Coins, Train, TrendingUp } from 'lucide-react-native';
+import { Coins, Fuel, Train, TrendingUp } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { ScreenScroll, Stack } from '@/components/ui';
@@ -27,14 +27,20 @@ export default function Today() {
 
       <View style={{ marginTop: S.xl }}>
         <PulseHero
-          valueLabel={fx.data ? fx.data.rate.toFixed(4) : '4.43'}
-          deltaLabel={fx.data ? `MYR per ${fx.data.pair.split('/')[1]} · as of ${fx.data.asOf}` : 'MYR / USD'}
+          valueLabel={fx.data ? fx.data.rate.toFixed(4) : '—'}
+          deltaLabel={
+            fx.data
+              ? `1 USD → MYR · as of ${fx.data.asOf}`
+              : fx.isLoading
+                ? 'Loading exchange rate…'
+                : 'Exchange rate unavailable'
+          }
         />
       </View>
 
       <Stack direction="row" gap={S.md} style={{ marginTop: S.md }}>
         <StatTile
-          label={fx.data ? `MYR / ${fx.data.pair.split('/')[1]}` : 'MYR / USD'}
+          label="USD / MYR"
           value={fx.data ? fx.data.rate.toFixed(2) : undefined}
           isLoading={fx.isLoading}
           isError={fx.isError}
@@ -43,7 +49,7 @@ export default function Today() {
           index={0}
         />
         <StatTile
-          label="Rail ridership · daily"
+          label="Rail trips · daily"
           value={ridership.data ? formatCompact(ridership.data.totalRail) : undefined}
           isLoading={ridership.isLoading}
           isError={ridership.isError}
@@ -56,10 +62,10 @@ export default function Today() {
       <Stack direction="row" gap={S.md} style={{ marginTop: S.md }}>
         <StatTile
           label="RON95 · per litre"
-          value={fuel.data?.ron95 ? `RM ${fuel.data.ron95.toFixed(2)}` : undefined}
+          value={fuel.data?.ron95 != null ? `RM ${fuel.data.ron95.toFixed(2)}` : undefined}
           isLoading={fuel.isLoading}
           isError={fuel.isError}
-          Icon={CloudRain}
+          Icon={Fuel}
           tone="chart-teal"
           index={2}
         />
@@ -78,10 +84,10 @@ export default function Today() {
         <SurpriseCard
           fact={
             ridership.data
-              ? `Malaysians made ${formatNumber(ridership.data.totalRail)} rail trips on ${ridership.data.asOf}.`
+              ? `Malaysians made ${formatNumber(ridership.data.totalRail + ridership.data.totalBus)} public transport trips on ${ridership.data.asOf}.`
               : 'Penang has the highest population density in Malaysia — 1,659 people per km².'
           }
-          source="data.gov.my · Prasarana ridership"
+          source="data.gov.my · Prasarana ridership headline"
         />
       </View>
     </ScreenScroll>

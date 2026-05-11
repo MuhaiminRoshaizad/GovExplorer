@@ -80,7 +80,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const scrollY = useScrollY();
 
   const tintStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 40], [1, 0.55], Extrapolation.CLAMP),
+    opacity: interpolate(scrollY.value, [0, 16], [1, 0.35], Extrapolation.CLAMP),
   }));
 
   return (
