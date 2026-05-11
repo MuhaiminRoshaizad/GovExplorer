@@ -199,6 +199,7 @@ Theme and language changes snap. This is the React Native standard practice (Lin
 | `Badge` | `src/components/ui/Badge.tsx` | Pill labels. Toned. |
 | `Screen` / `ScreenScroll` | `src/components/ui/Screen.tsx` | Safe-area + bg-color + tab-bar-clearance screen frame. `ScreenScroll` writes scroll position to `ScrollContext`. |
 | `BottomSheet` | `src/components/ui/BottomSheet.tsx` | Modal-backed bottom sheet with backdrop fade and spring slide-up. Used for preference pickers in About. |
+| `Skeleton` | `src/components/ui/Skeleton.tsx` | Shimmer-opacity placeholder for loading data. Reanimated `withRepeat` opacity loop. Used in tiles + dataset detail hero. |
 | `ScreenEnter` | `src/components/system/ScreenEnter.tsx` | First-mount entrance helper. Variants `fade`, `fadeUp`. |
 | `TabBar` | `src/components/nav/TabBar.tsx` | Floating blurred bottom tab bar with center AI FAB. |
 | `ScrollProvider` / `useScrollY` | `src/components/system/ScrollContext.tsx` | Shared scroll position for chrome animations. |

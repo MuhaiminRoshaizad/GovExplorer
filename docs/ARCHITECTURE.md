@@ -62,6 +62,7 @@ All four user-facing providers hydrate their state from `AsyncStorage` on mount.
 | `/(tabs)/settings` | `app/(tabs)/settings.tsx` | About page — identity + preferences |
 | `/chat` | `app/chat.tsx` | AI assistant — modal slide-up |
 | `/onboarding` | `app/onboarding.tsx` | First-run modal slide-up |
+| `/dataset/[id]` | `app/dataset/[id].tsx` | Dataset detail — hero number + (where wired) chart + source. Push-from-right card animation. |
 
 ### Modal presentation strategy
 
@@ -96,20 +97,32 @@ No animated transition. Switching theme or language **snaps** — the standard R
 api.data.gov.my
        │
        ▼
-src/lib/api.ts          ← single fetch helper, throws ApiError on non-2xx
+src/lib/api.ts                   ← single fetch helper, throws ApiError on non-2xx
        │
        ▼
-src/features/<feature>/api/use<Thing>Query.ts
+src/lib/queries/<dataset>.ts     ← shared query hooks (one file per dataset)
        │  (TanStack Query hook with stable key + parser)
        ▼
-src/features/<feature>/components/*  ← consume the hook, render
+features/<feature>/components/*  ← consume the hook, render
 ```
 
 Conventions:
-- One query hook per dataset, colocated under `src/features/<feature>/api/`.
-- Hooks return `{ data, isLoading, isError, refetch }` — no further wrapping.
-- Parsing happens in the hook (`select` or inline), so components receive view-shaped data.
-- 5-minute `staleTime`, 30-minute `gcTime` by default (see `src/lib/queryClient.ts`).
+- **Shared dataset hooks live in `src/lib/queries/`** — one file per dataset, exports its types + hooks. This avoids cross-feature imports when multiple features (e.g. Today and Insights) need the same data.
+- Hooks return TanStack Query's `{ data, isLoading, isError, refetch, ... }` — no further wrapping.
+- Parsing happens in `select` so components receive view-shaped data, not raw API shapes.
+- **Dataset-specific staleTime** — currency is `1h`, fuel `6h`, ridership `1h`, inflation `6h`. Defaults to `5m` from `queryClient`.
+- Feature-specific hooks (e.g. UI composition queries that aren't a 1:1 dataset wrapper) can still live under `src/features/<feature>/api/`. Rule of thumb: if more than one feature consumes it, put it in `src/lib/queries/`.
+
+### Currently wired
+
+| Dataset id | Hook | Used in |
+|---|---|---|
+| `currency` | `useCurrencyLatestQuery`, `useCurrencyHistoryQuery` | Today (USD tile), Dataset detail (line chart) |
+| `fuelprice` | `useFuelPriceLatestQuery` | Today (RON95 tile), Dataset detail |
+| `ridership_headline` | `useRidershipLatestQuery` | Today (rail tile), Surprise card, Dataset detail |
+| `cpi_headline` | `useInflationLatestQuery` | Today (inflation tile), Dataset detail |
+
+All other curated datasets (see `src/features/insights/catalogue.ts`) render a "Coming soon" hero on the detail screen — wiring them is a matter of adding a query hook per dataset and a small adapter in `app/dataset/[id].tsx`.
 
 ---
 

@@ -21,15 +21,18 @@ The opinionated, beautifully-built shell that proves the app's voice.
 - [x] Modal-as-card presentation strategy so close animations work on Android
 - [x] Full docs: README, ARCHITECTURE, DESIGN_SYSTEM, FEATURES, ROADMAP, SETUP, API, DATA_SOURCES, CONTRIBUTING
 
-## v1.1 — Live data
+## v1.1 — Live data (in progress)
 
-- [ ] `api.data.gov.my` query hooks for each curated dataset
-- [ ] Real Today stats (currency, weather, ridership, population)
-- [ ] First two Insights chart screens (Economy → MYR FX; Climate → Rainfall)
+- [x] `Skeleton` primitive for loading states
+- [x] `api.data.gov.my` query hooks for the first four datasets (`currency`, `fuelprice`, `ridership_headline`, `cpi_headline`) under `src/lib/queries/`
+- [x] Today screen wired — 4 tiles + pulse hero pull live data with skeleton/error states
+- [x] Insights screen redesigned — categories with horizontal-scrolling dataset cards
+- [x] Dataset detail route (`/dataset/[id]`) with hero number, source link, and a working 30-day FX line chart
+- [ ] Wire remaining curated datasets (catalogue in `src/features/insights/catalogue.ts` lists ~17 datasets; 4 are wired)
+- [ ] Pull-to-refresh on Today + Insights
 - [ ] Streak counter wired (`StorageKeys.streak*`)
-- [ ] "Today's surprise" rotating fact engine
+- [ ] "Today's surprise" rotating fact engine (currently shows ridership-derived fact when available)
 - [ ] Onboarding gating logic (route to `/onboarding` on first launch)
-- [ ] `Skeleton` primitive for loading states
 
 ## v1.2 — Map
 

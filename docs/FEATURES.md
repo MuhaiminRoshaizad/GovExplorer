@@ -29,9 +29,9 @@ The home tab. The goal: a person opens the app each morning and feels like Malay
 | Block | Component | Notes |
 |---|---|---|
 | Greeting + streak chip | `Greeting` | Time-of-day aware. Streak chip only shows for streaks ≥ 2. Brand line `Malaysia, today.` is bilingual. |
-| Pulse hero | `PulseHero` | One marquee stat with a live indicator dot pulsing on the UI thread. |
-| 2×2 stat tiles | `StatTile` | Currency, transit, weather, unemployment. Staggered entrance via Reanimated worklets. |
-| Surprise reveal | `SurpriseCard` | Tap to reveal a "did you know" fact. Spring rotation animation. |
+| Pulse hero | `PulseHero` | Live MYR/USD rate from BNM with a pulsing indicator on the UI thread. |
+| 2×2 stat tiles | `StatTile` | Wired to live data: MYR/USD (BNM), rail ridership (Prasarana), RON95 (KPDN), inflation YoY (DOSM). Each tile shows a `Skeleton` while loading and an em-dash on error. Staggered entrance via Reanimated worklets. |
+| Surprise reveal | `SurpriseCard` | Tap to reveal a "did you know" fact — derived from ridership data when available. Spring rotation animation. |
 
 **Light gamification (planned):**
 - Daily-open streak persisted in `AsyncStorage` (`StorageKeys.streak*`). Logic for incrementing isn't wired in v1.0.
@@ -66,13 +66,24 @@ Category list → chart screen pattern.
 | Climate & environment | Weather, rainfall, AQI, water levels |
 | Population & society | Population by state, births/deaths, unemployment, household income |
 
-**v1.0 placeholder:** Four category cards in a list, animated in via `ScreenEnter`.
+**Layout (v1.1):** Sectioned vertical layout — one section per category. Each section has a header (icon + name + dataset count) and a **horizontal-scrolling list** of dataset cards. The horizontal list escapes `ScreenScroll`'s padding via a negative-margin trick so cards visually scroll to the screen edge.
 
-**v1.1 ships:** Each chart screen will include:
-- Hero number with delta
-- Primary visualisation (`react-native-gifted-charts` or bespoke `react-native-svg`)
-- "Beautiful card" share affordance — render to PNG and share-sheet out
-- Source attribution row (agency, last-updated date, link to data.gov.my)
+**Dataset card** (~200×160px):
+- Tone-tinted icon (top-left)
+- Name + agency · cadence
+- `↗` icon if wired, `SOON` badge if not yet
+
+Tap → `/dataset/<id>` (`app/dataset/[id].tsx`) — slide-from-right card transition.
+
+**Dataset detail screen:**
+- Header (back button + agency name)
+- Hero card: dataset icon + name + description
+- **For wired datasets** (`currency`, `fuelprice`, `ridership_headline`, `cpi_headline`):
+  - Hero number with current value, unit, delta vs previous, "as of" date
+  - For `currency`: 30-day area line chart via `react-native-gifted-charts`
+  - Skeleton loaders during fetch; "—" + muted "Couldn't load data" on error
+- **For other datasets**: "Coming soon" hero card with the same chrome
+- Source row at the bottom — tap to open the dataset page on `data.gov.my`
 
 ---
 
