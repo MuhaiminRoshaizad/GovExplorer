@@ -89,6 +89,13 @@ function AppNavigator() {
             contentStyle: { backgroundColor: theme.bg },
           }}
         />
+        <RouterStack.Screen
+          name="dataset/[id]"
+          options={{
+            animation: 'slide_from_right',
+            contentStyle: { backgroundColor: theme.bg },
+          }}
+        />
       </RouterStack>
     </>
   );
