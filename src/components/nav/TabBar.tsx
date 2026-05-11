@@ -1,4 +1,5 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import {
   Compass,
@@ -9,7 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -50,7 +51,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     settings: t.tabs.about,
   };
 
-  // Split routes into left + right of the center FAB
   const leftRoutes = state.routes.slice(0, 2);
   const rightRoutes = state.routes.slice(2);
 
@@ -73,36 +73,64 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     );
   };
 
+  const tint = mode === 'dark' ? 'dark' : 'light';
+  const tintOverlay =
+    mode === 'dark' ? 'rgba(20,24,33,0.55)' : 'rgba(255,255,255,0.55)';
+
   return (
     <View
       pointerEvents="box-none"
       style={{
-        backgroundColor: theme.bg,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
         paddingTop: FAB_LIFT + S.sm,
         paddingBottom: insets.bottom + S.sm,
         paddingHorizontal: S.lg,
       }}
     >
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: theme.surface,
-          borderRadius: R.pill,
-          height: BAR_HEIGHT,
-          paddingHorizontal: S.sm,
-          shadowColor: '#000',
-          shadowOpacity: mode === 'dark' ? 0.35 : 0.08,
-          shadowRadius: 22,
-          shadowOffset: { width: 0, height: 10 },
-          elevation: 10,
-          borderWidth: mode === 'dark' ? 1 : 0,
-          borderColor: theme.border,
-        }}
+        style={[
+          {
+            height: BAR_HEIGHT,
+            borderRadius: R.pill,
+            overflow: 'hidden',
+          },
+          Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOpacity: mode === 'dark' ? 0.4 : 0.1,
+              shadowRadius: 22,
+              shadowOffset: { width: 0, height: 10 },
+            },
+            android: {
+              elevation: 12,
+              backgroundColor: tintOverlay,
+            },
+            default: {},
+          }),
+        ]}
       >
-        {leftRoutes.map((r, i) => renderTab(r, i))}
-        <View style={{ width: FAB_SIZE + S.sm }} />
-        {rightRoutes.map((r, i) => renderTab(r, i + 2))}
+        <BlurView intensity={70} tint={tint} style={StyleSheet.absoluteFillObject} />
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            { backgroundColor: tintOverlay },
+          ]}
+        />
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: S.sm,
+          }}
+        >
+          {leftRoutes.map((r, i) => renderTab(r, i))}
+          <View style={{ width: FAB_SIZE + S.sm }} />
+          {rightRoutes.map((r, i) => renderTab(r, i + 2))}
+        </View>
       </View>
 
       <View
@@ -233,7 +261,7 @@ function ChatFab({ onPress }: { onPress: () => void }) {
               shadowOffset: { width: 0, height: 8 },
             },
             android: {
-              elevation: 12,
+              elevation: 14,
             },
             default: {},
           }),
